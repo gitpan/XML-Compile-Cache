@@ -1,0 +1,10 @@
+ChangeLog
+MANIFEST
+Makefile.PL
+README
+lib/XML/Compile/Cache.pm
+lib/XML/Compile/Cache.pod
+t/01use.t
+t/10declare.t
+t/pod.t
+META.yml                                 Module meta-data (added by MakeMaker)

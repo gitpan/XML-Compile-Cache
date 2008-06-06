@@ -1,0 +1,218 @@
+=head1 NAME
+
+XML::Compile::Cache - Cache compiled XML translators
+
+=head1 INHERITANCE
+
+ XML::Compile::Cache
+   is a XML::Compile::Schema
+
+=head1 SYNOPSIS
+
+ my $cache = XML::Compile::Cache->new(...);
+
+ $cache->declare('READER',  $type,  @options);
+ $cache->declare(RW     => \@types, @options);
+ $cache->declare(WRITER =>  $type, \@options);
+
+ $cache->compileAll;
+ $cache->compileAll('RW');
+
+ # get the cached code ref for the reader
+ my $reader = $cache->reader($type);
+ use Data::Dumper;
+ print Dumper $reader->($xml);
+
+ # get the cached code ref for the writer, and use it
+ my $xml = $cache->writer($type)->($doc, $perl);
+ print $xml->toString(1);
+
+ # use the base-class uncached, the XML::Compile::Schema
+ my $do = $cache->compile(READER => $type, @opts);
+
+=head1 METHODS
+
+=head2 Constructors
+
+XML::Compile::Cache-E<gt>B<new>(OPTIONS)
+
+=over 4
+
+ Option          --Default
+ allow_undeclared  <false>
+ opts_readers      []
+ opts_rw           []
+ opts_writers      []
+ prefixes          <smart>
+
+. allow_undeclared => BOOLEAN
+
+=over 4
+
+When true, you may call the reader or writer with types which were
+not registered with L<declare()|XML::Compile::Cache/"Administration">.  In that case, the reader or
+writer may also get options passed for the compiler, as long as
+they are consistent over each use of the type.
+
+=back
+
+. opts_readers => HASH|ARRAY-of-PAIRS
+
+. opts_rw => HASH|ARRAY-of-PAIRS
+
+=over 4
+
+Options added to both READERs and WRITERS.  Options which are passed
+with L<declare()|XML::Compile::Cache/"Administration"> and C<opts_readers> or C<opts_writers> will overrule
+these.
+
+=back
+
+. opts_writers => HASH|ARRAY-of-PAIRS
+
+. prefixes => HASH|ARRAY-of-PAIRS
+
+=over 4
+
+Define prefix name to name-space mappings.
+
+These will also be automatically added to the writer options
+(C<opts_writers>), as C<output_namespaces> value, unless that
+already defines a name-space table.
+
+=back
+
+=back
+
+=head2 Accessors
+
+$obj-E<gt>B<allowUndeclared>([BOOLEAN])
+
+=over 4
+
+Whether it is permitted to create readers and writers which are not
+declared cleanly.
+
+=back
+
+$obj-E<gt>B<prefixes>([PAIRS])
+
+=over 4
+
+Returns the HASH with prefix to name-space translations.  You should not
+modify the returned HASH, but can provide PAIRS of additional prefix to
+namespace relations.
+
+=back
+
+=head2 Administration
+
+$obj-E<gt>B<compileAll>(['READER'|'WRITER'|'RW', [NAMESPACE]])
+
+=over 4
+
+Compile all the declared readers and writers (default 'RW').  You may
+also select to pre-compile only the READERs or only the WRITERs.  The
+selection can be limited further by specifying a namespace.
+
+By default, the processors are only compiled when used.  This method is
+especially useful in a daemon process, where preparations can take as
+much time as they want to... and running should be as fast as possible.
+
+=back
+
+$obj-E<gt>B<declare>('READER'|'WRITER'|'RW', TYPE|ARRAY-of-TYPES, OPTIONS)
+
+=over 4
+
+Register that the indicated TYPE (or TYPES) may be used, and needs to
+be translated with the OPTIONS (either specified as ARRAY or LIST).
+Specify whether it may get used as READER, WRITER, or both (RW).  If the
+READER and WRITER need different options, then you need to declare them
+seperately; in that case you cannot use RW.
+
+The TYPE should be understood by L<findName()|XML::Compile::Cache/"Administration">, so may be prefixed.
+
+example: 
+
+  $cache->declare(READER => 'pref:count', sloppy_integers => 1)
+        ->declare(RW     => '{myns}mylocal');
+
+  $cache->declare(WRITER => [ 'xsd:int', '{http://}aap' ]);
+
+=back
+
+$obj-E<gt>B<findName>(NAME)
+
+=over 4
+
+Understand the name specification.  The NAME can be a full type (like
+'{namespace}localname') or a prefixed type (like 'myms:localname').
+The prefixes must be defined with L<new(prefixes)|XML::Compile::Cache/"Constructors">.
+
+=back
+
+$obj-E<gt>B<printIndex>([FILEHANDLE], OPTIONS)
+
+=over 4
+
+ Option       --Default
+ show_declared  <true>
+
+. show_declared => BOOLEAN
+
+=over 4
+
+Add an indicator to each line, about whether readers and writers are
+declare for the type.  Declared readers and writers will show flags
+C<r> and C<w> respectively.  Compiled readers and writers carry a
+C<R> and/or C<W>.
+
+=back
+
+=back
+
+=head2 Producers
+
+$obj-E<gt>B<reader>(TYPE|NAME, OPTIONS)
+
+=over 4
+
+Returns the reader for the TYPE, which may be specified as prefixed NAME,
+see L<findName()|XML::Compile::Cache/"Administration">.  OPTIONS are only permitted if L<new(allow_undeclared)|XML::Compile::Cache/"Constructors">
+is true, and the same as the previous call to this method.
+
+=back
+
+$obj-E<gt>B<writer>(TYPE)
+
+=over 4
+
+=back
+
+=head1 SEE ALSO
+
+This module is part of XML-Compile-Cache distribution version 0.10,
+built on June 06, 2008. Website: F<http://perl.overmeer.net/xml-compile/>
+
+All modules in this suite:
+L</XML::Compile>,
+L</XML::Compile::SOAP>,
+L</XML::Compile::SOAP::Daemon>,
+L</XML::Compile::Tester>,
+L</XML::Compile::Cache>,
+L</XML::Compile::Dumper>.
+
+Please post questions or ideas to
+L<http://lists.scsys.co.uk/cgi-bin/mailman/listinfo/xml-compile|the mailinglist>
+For life contact with other developers, visit the C<#xml-compile> channel
+on C<irc.perl.org>.
+
+=head1 LICENSE
+
+Copyrights 2008 by Mark Overmeer. For other contributors see ChangeLog.
+
+This program is free software; you can redistribute it and/or modify it
+under the same terms as Perl itself.
+See F<http://www.perl.com/perl/misc/Artistic.html>
+
