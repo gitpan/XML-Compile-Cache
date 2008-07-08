@@ -7,7 +7,7 @@ use strict;
 
 package XML::Compile::Cache;
 use vars '$VERSION';
-$VERSION = '0.11';
+$VERSION = '0.12';
 
 use base 'XML::Compile::Schema';
 
@@ -38,11 +38,9 @@ sub init($)
     my $prefixes = delete $args->{prefixes}   || [];
     if(ref $prefixes eq 'ARRAY')
     {   $self->{XCC_prefix}  = { @$prefixes };
-        unshift @{$self->{XCC_wopts}}, output_namespaces => $prefixes;
     }
     else
     {   $self->{XCC_prefix}  = $prefixes;
-        unshift @{$self->{XCC_wopts}}, output_namespaces => [ %$prefixes ];
     }
     $self;
 }
@@ -137,10 +135,13 @@ sub _createReader($@)
 {   my ($self, $type) = (shift, shift);
     trace "create reader for $type";
 
-    $self->compile
-     ( READER => $type
-     , $self->_merge_opts($self->{XCC_opts}, $self->{XCC_ropts}, \@_)
+    my @opts = $self->_merge_opts
+     ( {prefixes => [ %{$self->{XCC_prefix}} ]}
+     , $self->{XCC_opts}, $self->{XCC_ropts}
+     , \@_
      );
+
+    $self->compile(READER => $type, @opts);
 }
 
 
@@ -187,10 +188,12 @@ sub _createWriter($)
 {   my ($self, $type) = @_;
     
     trace "create writer for $type";
-    $self->compile
-     ( WRITER => $type
-     , $self->_merge_opts($self->{XCC_opts}, $self->{XCC_wopts}, \@_)
-     );
+    my @opts = $self->_merge_opts
+      ( {prefixes => [ %{$self->{XCC_prefix}} ]}
+      , $self->{XCC_opts}, $self->{XCC_wopts}
+      , \@_
+      );
+    $self->compile(WRITER => $type, @opts);
 }
 
 # Create a list with options, from a list of ARRAYs and HASHES.  The last

@@ -46,6 +46,7 @@ XML::Compile::Cache-E<gt>B<new>(OPTIONS)
  hook                XML::Compile::Schema  undef
  hooks               XML::Compile::Schema  []
  ignore_unused_tags  XML::Compile::Schema  <false>
+ key_rewrite         XML::Compile::Schema  []
  opts_readers                         []
  opts_rw                              []
  opts_writers                         []
@@ -70,6 +71,8 @@ they are consistent over each use of the type.
 
 . ignore_unused_tags => BOOLEAN|REGEXP
 
+. key_rewrite => HASH|CODE|ARRAY-of-HASH-and-CODE
+
 . opts_readers => HASH|ARRAY-of-PAIRS
 
 . opts_rw => HASH|ARRAY-of-PAIRS
@@ -91,8 +94,7 @@ these.
 Define prefix name to name-space mappings.
 
 These will also be automatically added to the writer options
-(C<opts_writers>), as C<output_namespaces> value, unless that
-already defines a name-space table.
+(C<opts_writers>), unless that already defines a name-space table.
 
 =back
 
@@ -113,6 +115,14 @@ See L<XML::Compile::Schema/"Accessors">
 =back
 
 $obj-E<gt>B<addHooks>(HOOK, [HOOK, ...])
+
+=over 4
+
+See L<XML::Compile::Schema/"Accessors">
+
+=back
+
+$obj-E<gt>B<addKeyRewrite>(CODE|HASH, CODE|HASH, ...)
 
 =over 4
 
@@ -400,8 +410,8 @@ Error: don't known how to interpret XML data
 
 =head1 SEE ALSO
 
-This module is part of XML-Compile-Cache distribution version 0.11,
-built on June 12, 2008. Website: F<http://perl.overmeer.net/xml-compile/>
+This module is part of XML-Compile-Cache distribution version 0.12,
+built on July 08, 2008. Website: F<http://perl.overmeer.net/xml-compile/>
 
 All modules in this suite:
 L<XML::Compile>,
