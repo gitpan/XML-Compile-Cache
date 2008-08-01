@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name:                XML-Compile-Cache
-version:             0.12
+version:             0.13
 abstract:            Cache compiled XML translators
 license:             perl
 author:              

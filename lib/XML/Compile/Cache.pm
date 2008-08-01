@@ -7,13 +7,14 @@ use strict;
 
 package XML::Compile::Cache;
 use vars '$VERSION';
-$VERSION = '0.12';
+$VERSION = '0.13';
 
 use base 'XML::Compile::Schema';
 
 use Log::Report 'xml-compile-cache', syntax => 'SHORT';
 
 use XML::Compile::Util   qw/pack_type unpack_type/;
+use List::Util           qw/first/;
 
 
 sub init($)
@@ -35,13 +36,15 @@ sub init($)
     $self->{XCC_readers} = {};
     $self->{XCC_writers} = {};
 
-    my $prefixes = delete $args->{prefixes}   || [];
-    if(ref $prefixes eq 'ARRAY')
-    {   $self->{XCC_prefix}  = { @$prefixes };
+    $self->{XCC_prefix}  = $self->_namespaceTable(delete $args->{prefixes});
+
+    if(my $anyelem = $args->{any_element})
+    {   if($anyelem eq 'ATTEMPT')
+        {   push @{$self->{XCC_ropts}}
+              , any_element => sub {$self->_convertAnyElementReader(@_)};
+        }
     }
-    else
-    {   $self->{XCC_prefix}  = $prefixes;
-    }
+
     $self;
 }
 
@@ -50,11 +53,12 @@ sub init($)
 
 sub prefixes(@)
 {   my $self = shift;
+    my $p    = $self->{XCC_prefix};
     while(@_)
-    {   my $k = shift;
-        $self->{XCC_prefix}{$k} = shift;
+    {   my ($prefix, $ns) = (shift, shift);
+        $p->{$ns} = { uri => $ns, prefix => $prefix, used => 0 };
     }
-    $self->{XCC_prefix};
+    $p;
 }
 
 
@@ -136,7 +140,7 @@ sub _createReader($@)
     trace "create reader for $type";
 
     my @opts = $self->_merge_opts
-     ( {prefixes => [ %{$self->{XCC_prefix}} ]}
+     ( {prefixes => $self->prefixes}
      , $self->{XCC_opts}, $self->{XCC_ropts}
      , \@_
      );
@@ -189,7 +193,7 @@ sub _createWriter($)
     
     trace "create writer for $type";
     my @opts = $self->_merge_opts
-      ( {prefixes => [ %{$self->{XCC_prefix}} ]}
+      ( {prefixes => $self->prefixes}
       , $self->{XCC_opts}, $self->{XCC_wopts}
       , \@_
       );
@@ -242,20 +246,20 @@ sub declare($$@)
 
 sub findName($)
 {   my ($self, $name) = @_;
+defined $name or panic "findName";
+
     my ($type, $ns, $local);
     if($name =~ m/^\{/)
-    {   ($type, $ns, $local) = ($name, unpack_type $name);
-    }
-    elsif($name =~ m/^(\w+)\:(\S+)$/)
-    {   (my $prefix, $local) = ($1, $2);
-        $ns = $self->{XCC_prefix}{$prefix}
-            or error __x"unknown protocol name prefix `{prefix}'"
-                 , prefix => $prefix;
-
-        $type  = pack_type $ns, $local;
+    {   $type = $name;
     }
     else
-    {   error __x"protocol name must show namespace or prefix";
+    {   (my $prefix,$local) = $name =~ m/^(\w*)\:(\S+)$/ ? ($1,$2) : ('',$name);
+        my $p  = $self->{XCC_prefix};
+        my $ns = first { $p->{$_}{prefix} eq $prefix } keys %$p;
+        defined $ns
+            or error __x"unknown name prefix for `{name}'", name => $name;
+
+        $type  = pack_type $ns, $local;
     }
 
     $type;
@@ -294,5 +298,20 @@ sub printIndex(@)
     }
     print $fh @output;
 }
+
+#---------------
+# Convert ANY elements and attributes
+
+sub _convertAnyElementReader(@)
+{   my ($self, $type, $nodes, $path, $args) = @_;
+
+    my $reader  = try { $self->reader($type) };
+    !$@ && $reader or return ($type => $nodes);
+
+    my @nodes   = ref $nodes eq 'ARRAY' ? @$nodes : $nodes;
+    my @convert = map {$reader->($_)} @nodes;
+    ($type => (ref $nodes eq 'ARRAY' ? $convert[0] : \@convert));
+}
+
 
 1;
