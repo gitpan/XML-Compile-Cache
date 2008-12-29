@@ -25,6 +25,7 @@ XML::Compile::Cache - Cache compiled XML translators
  print Dumper $reader->($xml);
 
  # get the cached code ref for the writer, and use it
+ my $doc = XML::LibXML::Document->new('1.0', 'UTF-8');
  my $xml = $cache->writer($type)->($doc, $perl);
  print $xml->toString(1);
 
@@ -43,7 +44,6 @@ XML::Compile::Cache-E<gt>B<new>(OPTIONS)
 
  Option            --Defined in     --Default
  allow_undeclared                     <false>
- any_attribute                        'SKIP_ALL'
  any_element                          'SKIP_ALL'
  hook                XML::Compile::Schema  undef
  hooks               XML::Compile::Schema  []
@@ -66,8 +66,6 @@ writer may also get options passed for the compiler, as long as
 they are consistent over each use of the type.
 
 =back
-
-. any_attribute => CODE|'TAKE_ALL'|'SKIP_ALL'|'ATTEMPT'
 
 . any_element => CODE|'TAKE_ALL'|'SKIP_ALL'|'ATTEMPT'
 
@@ -205,13 +203,34 @@ See L<XML::Compile::Schema/"Accessors">
 
 =back
 
+$obj-E<gt>B<prefix>(PREFIX)
+
+=over 4
+
+Lookup a prefix definition.  This returns a HASH with namespace info.
+
+=back
+
+$obj-E<gt>B<prefixFor>(URI)
+
+=over 4
+
+Lookup the preferred prefix for the URI.
+
+=back
+
 $obj-E<gt>B<prefixes>([PAIRS])
 
 =over 4
 
 Returns the HASH with prefix to name-space translations.  You should not
-modify the returned HASH, but can provide PAIRS of additional prefix to
-namespace relations.
+modify the returned HASH.  New PAIRS of prefix to namespace relations
+can be passed.
+
+[0.14]
+If a name-space appears for the second time, then the new prefix will be
+recognized by L<findName()|XML::Compile::Cache/"Administration">, but not used in the output.  When the prefix
+already exists for a different namespace, then an error will be casted.
 
 =back
 
@@ -251,13 +270,13 @@ $obj-E<gt>B<reader>(TYPE|NAME, OPTIONS)
 
 =over 4
 
-Returns the reader for the TYPE, which may be specified as prefixed NAME
-(see L<findName()|XML::Compile::Cache/"Administration">).  OPTIONS are only permitted if L<new(allow_undeclared)|XML::Compile::Cache/"Constructors">
-is true, and the same as the previous call to this method.
+Returns the reader CODE for the TYPE or NAME (see L<findName()|XML::Compile::Cache/"Administration">).
+OPTIONS are only permitted if L<new(allow_undeclared)|XML::Compile::Cache/"Constructors"> is true, and the
+same as the previous call to this method.
 
 The reader will be compiled the first time that it is used, and that
 same CODE reference will be returned each next request for the same
-type.
+TYPE.  Call L<compileAll()|XML::Compile::Cache/"Compilers"> to have all readers compiled by force.
 
 example: 
 
@@ -282,9 +301,9 @@ $obj-E<gt>B<writer>(TYPE|NAME)
 
 =over 4
 
-Returns the writer for the TYPE, which may be specified as prefixed NAME
-(see L<findName()|XML::Compile::Cache/"Administration">).  OPTIONS are only permitted if L<new(allow_undeclared)|XML::Compile::Cache/"Constructors">
-is true, and the same as the previous call to this method.
+Returns the writer CODE for the TYPE or NAME (see L<findName()|XML::Compile::Cache/"Administration">).
+OPTIONS are only permitted if L<new(allow_undeclared)|XML::Compile::Cache/"Constructors"> is true, and the
+same as the previous call to this method.
 
 The writer will be compiled the first time that it is used, and that
 same CODE reference will be returned each next request for the same
@@ -337,10 +356,27 @@ $obj-E<gt>B<findName>(NAME)
 
 =over 4
 
-Translate the NAME specification into a schema type.  The NAME
-can be a full type (like '{namespace}localname', usually created
-with L<XML::Compile::Util::pack_type()|XML::Compile::Util/"Packing">) or a prefixed type (like
-'myms:localname', defined with L<new(prefixes)|XML::Compile::Cache/"Constructors"> or L<prefixes()|XML::Compile::Cache/"Accessors">).
+Translate the NAME specification into a schema defined full type.
+The NAME can be a full type (like '{namespace}localname', usually
+created with L<XML::Compile::Util::pack_type()|XML::Compile::Util/"Packing">) or a prefixed type
+(like 'myns:localname', where C<myns> is defined via L<new(prefixes)|XML::Compile::Cache/"Constructors">
+or L<prefixes()|XML::Compile::Cache/"Accessors">).
+
+When the form is 'myns:' (so without local name), the namespace uri is
+returned.
+
+example: of findName()
+
+  $schema->prefixes(pre => 'http://namespace');
+
+  my $type = $schema->findName('pre:name');
+  print $type;   # {http://namespace}name
+
+  my $ns   = $schema->findName('pre:');
+  print $ns;     # http://namespace
+
+  my $type = $schema->findName('{somens}name');
+  print $type;   # {somens}name    [a no-op]
 
 =back
 
@@ -436,17 +472,20 @@ Error: don't known how to interpret XML data
 
 =head1 SEE ALSO
 
-This module is part of XML-Compile-Cache distribution version 0.13,
-built on August 01, 2008. Website: F<http://perl.overmeer.net/xml-compile/>
+This module is part of XML-Compile-Cache distribution version 0.14,
+built on December 29, 2008. Website: F<http://perl.overmeer.net/xml-compile/>
 
 All modules in this suite:
 L<XML::Compile>,
 L<XML::Compile::SOAP>,
+L<XML::Compile::SOAP12>,
 L<XML::Compile::SOAP::Daemon>,
 L<XML::Compile::Tester>,
 L<XML::Compile::Cache>,
+L<XML::Compile::Dumper>,
 L<XML::Rewrite>,
-L<XML::Compile::Dumper>.
+and
+L<XML::LibXML::Simple>.
 
 Please post questions or ideas to the mailinglist at
 F<http://lists.scsys.co.uk/cgi-bin/mailman/listinfo/xml-compile>

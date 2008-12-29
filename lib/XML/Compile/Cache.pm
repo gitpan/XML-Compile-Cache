@@ -7,7 +7,7 @@ use strict;
 
 package XML::Compile::Cache;
 use vars '$VERSION';
-$VERSION = '0.13';
+$VERSION = '0.14';
 
 use base 'XML::Compile::Schema';
 
@@ -36,7 +36,10 @@ sub init($)
     $self->{XCC_readers} = {};
     $self->{XCC_writers} = {};
 
-    $self->{XCC_prefix}  = $self->_namespaceTable(delete $args->{prefixes});
+    my $p = $self->{XCC_namespaces}
+          = $self->_namespaceTable(delete $args->{prefixes});
+    my %a = map { ($_->{prefix} => $_) } values %$p;
+    $self->{XCC_prefixes} = \%a;
 
     if(my $anyelem = $args->{any_element})
     {   if($anyelem eq 'ATTEMPT')
@@ -53,12 +56,32 @@ sub init($)
 
 sub prefixes(@)
 {   my $self = shift;
-    my $p    = $self->{XCC_prefix};
+    my ($p, $a) = @$self{ qw/XCC_namespaces XCC_prefixes/ };
     while(@_)
     {   my ($prefix, $ns) = (shift, shift);
-        $p->{$ns} = { uri => $ns, prefix => $prefix, used => 0 };
+        $p->{$ns} ||= { uri => $ns, prefix => $prefix, used => 0 };
+
+        if(my $def = $a->{$prefix})
+        {   if($def->{uri} ne $ns)
+            {   error __x"prefix {prefix} already refers to {uri}, cannot use it for {ns}"
+                  , prefix => $prefix, uri => $def->{uri}, ns => $ns;
+            }
+        }
+        else
+        {   $a->{$prefix} = $p->{$ns};
+        }
     }
     $p;
+}
+
+
+sub prefix($) { $_[0]->{XCC_prefixes}{$_[1]} }
+
+
+sub prefixFor($)
+{   my $def = $_[0]->{XCC_namespaces}{$_[1]} or return ();
+    $def->{used}++;
+    $def->{prefix};
 }
 
 
@@ -108,29 +131,23 @@ sub reader($@)
         return $readers->{$type}
             if $readers->{$type};
     }
-    elsif($self->{XCC_undecl})
+    elsif($self->allowUndeclared)
     {   if(my $ur = $self->{XCC_uropts}{$type})
         {   my $differs = @$ur != @_;
             unless($differs)
-            {   for(my $i=0; $i<@$ur; $i++)
-                {   $differs++ if $ur->[$i] ne $_[$i];
-                }
-            }
+            { for(my $i=0; $i<@$ur; $i++) {$differs++ if $ur->[$i] ne $_[$i]} } 
 
-            error __x"undeclared reader {name} used with different options: before ({was}), now ({this})"
-              , name => $name, was => $ur, this => \@_
-                  if $differs;
+            # do not use cached version when options differ
+            return $self->_createReader($type, @_)
+                if $differs;
         }
         else
         {   $self->{XCC_uropts}{$type} = \@_;
         }
     }
     elsif(exists $self->{XCC_dwopts}{$type})
-    {   error __x"type {name} is only declared as writer", name => $name;
-    }
-    else
-    {   error __x"type {name} is not declared", name => $name;
-    }
+         { error __x"type {name} is only declared as writer", name => $name }
+    else { error __x"type {name} is not declared", name => $name }
 
     $readers->{$type} ||= $self->_createReader($type, @_);
 }
@@ -139,13 +156,10 @@ sub _createReader($@)
 {   my ($self, $type) = (shift, shift);
     trace "create reader for $type";
 
-    my @opts = $self->_merge_opts
-     ( {prefixes => $self->prefixes}
-     , $self->{XCC_opts}, $self->{XCC_ropts}
-     , \@_
-     );
-
-    $self->compile(READER => $type, @opts);
+    $self->compile(READER => $type,
+      , $self->mergeCompileOptions($self->{XCC_opts}
+          , $self->{XCC_ropts}, $self->{XCC_dropts}{$type}, \@_)
+      );
 }
 
 
@@ -165,14 +179,11 @@ sub writer($)
     {   if(my $ur = $self->{XCC_uwopts}{$type})
         {   my $differs = @$ur != @_;
             unless($differs)
-            {   for(my $i=0; $i<@$ur; $i++)
-                {   $differs++ if $ur->[$i] ne $_[$i];
-                }
-            }
+            { for(my $i=0; $i<@$ur; $i++) {$differs++ if $ur->[$i] ne $_[$i]} }
 
-            error __x"undeclared writer {name} used with different options: before ({was}), now ({this})"
-              , name => $name, was => $ur, this => \@_
-                  if $differs;
+            # do not use cached version when options differ
+            return $self->_createWriter($type, @_)
+                if $differs;
         }
         else
         {   $self->{XCC_uwopts}{$type} = \@_;
@@ -192,20 +203,57 @@ sub _createWriter($)
 {   my ($self, $type) = @_;
     
     trace "create writer for $type";
-    my @opts = $self->_merge_opts
-      ( {prefixes => $self->prefixes}
-      , $self->{XCC_opts}, $self->{XCC_wopts}
-      , \@_
+    $self->compile(WRITER => $type, $self->mergeCompileOptions
+       ($self->{XCC_opts}, $self->{XCC_wopts}, $self->{XCC_dwopts}{$type}, \@_)
       );
-    $self->compile(WRITER => $type, @opts);
 }
 
-# Create a list with options, from a list of ARRAYs and HASHES.  The last
-# ARRAY or HASH with a certain option value overwrites all previous values.
+# Create a list with options for X::C::Schema::compile(), from a list of ARRAYs
+# and HASHES with options.  The later options overrule the older, but in some
+# cases, the new values are added.  This method knows how some of the options
+# of ::compile() behave.  [last update X::C v0.98]
 
-sub _merge_opts(@)
+sub mergeCompileOptions(@)
 {   my $self = shift;
-    map { !defined $_ ? () : ref $_ eq 'ARRAY' ? @$_ : %$_ } @_;
+    my %p    = %{$self->{XCC_namespaces}};
+    my %opts = (prefixes => \%p, hooks => [], typemap => {});
+
+    # flatten list of parameters
+    my @take = map {!defined $_ ? () : ref $_ eq 'ARRAY' ? @$_ : %$_ } @_;
+
+    while(@take)
+    {   my ($opt, $val) = (shift @take, shift @take);
+        if($opt eq 'hook')
+        {   ($opt, $val) = (hooks => (ref $val eq 'ARRAY' ? {@$val} : $val));
+        }
+
+        if($opt eq 'prefixes')
+        {   my %t = $self->_namespaceTable($val, 1, 0);  # expand
+            @p{keys %t} = values %t;   # overwrite old def if exists
+        }
+        elsif($opt eq 'hooks')
+        {   my @hooks = ref $val eq 'ARRAY' ? @$val : defined $val ? $val : ();
+            foreach my $hook (grep {$_->{type}} @hooks)   # rewrite prefixed names
+            {   my $types = $hook->{type};
+                $hook->{type} =
+                  [ map {ref $_ eq 'Regexp' ? $_ : $self->findName($_)}
+                       ref $types eq 'ARRAY' ? @$types : $types ];
+            }
+            unshift @{$opts{hooks}}, @hooks;
+        }
+        elsif($opt eq 'typemap')
+        {   $val ||= {};
+            @{$opts{typemap}}{keys %$val} = values %$val;
+        }
+        elsif($opt eq 'key_rewrite')
+        {   unshift @{$opts{key_rewrite}}, ref $val eq 'ARRAY' ? @$val : $val;
+        }
+        else
+        {   $opts{$opt} = $val;
+        }
+    }
+
+    %opts;
 }
 
 sub _need($)
@@ -215,8 +263,13 @@ sub _need($)
    : error __x"use READER, WRITER or RW, not {dir}", dir => $_[1];
 }
 
-#----------------------
+# support 
+sub compile($$@)
+{   my ($self, $action, $type, @args) = @_;
+    $self->SUPER::compile($action, $self->findName($type), @args);
+}
 
+#----------------------
 
 sub declare($$@)
 {   my ($self, $need, $names, @opts) = @_;
@@ -227,6 +280,8 @@ sub declare($$@)
 
     foreach my $name (ref $names eq 'ARRAY' ? @$names : $names)
     {   my $type = $self->findName($name);
+        trace "declare $type";
+
         if($need_r)
         {   defined $self->{XCC_dropts}{$type}
                and warning __x"reader {name} declared again", name => $name;
@@ -246,23 +301,21 @@ sub declare($$@)
 
 sub findName($)
 {   my ($self, $name) = @_;
-defined $name or panic "findName";
+    defined $name
+        or panic "findName called without name";
 
-    my ($type, $ns, $local);
-    if($name =~ m/^\{/)
-    {   $type = $name;
-    }
-    else
-    {   (my $prefix,$local) = $name =~ m/^(\w*)\:(\S+)$/ ? ($1,$2) : ('',$name);
-        my $p  = $self->{XCC_prefix};
-        my $ns = first { $p->{$_}{prefix} eq $prefix } keys %$p;
-        defined $ns
-            or error __x"unknown name prefix for `{name}'", name => $name;
+    return $name if $name =~ m/^\{/;
 
-        $type  = pack_type $ns, $local;
+    my ($prefix,$local) = $name =~ m/^([\w-]*)\:(\S*)$/ ? ($1,$2) : ('',$name);
+    my $def = $self->{XCC_prefixes}{$prefix};
+    unless($def)
+    {   return $name if $prefix eq '';   # namespace-less
+        trace __x"known prefixes: {prefixes}"
+          , prefixes => [ sort keys %{$self->{XCC_prefixes}} ];
+        error __x"unknown name prefix for `{name}'", name => $name;
     }
 
-    $type;
+    length $local ? pack_type($def->{uri}, $local) : $def->{uri};
 }
 
 
@@ -303,15 +356,16 @@ sub printIndex(@)
 # Convert ANY elements and attributes
 
 sub _convertAnyElementReader(@)
-{   my ($self, $type, $nodes, $path, $args) = @_;
+{   my ($self, $type, $nodes, $path, $read, $args) = @_;
 
     my $reader  = try { $self->reader($type) };
     !$@ && $reader or return ($type => $nodes);
 
     my @nodes   = ref $nodes eq 'ARRAY' ? @$nodes : $nodes;
     my @convert = map {$reader->($_)} @nodes;
-    ($type => (ref $nodes eq 'ARRAY' ? $convert[0] : \@convert));
-}
 
+    my $key     = $read->keyRewrite($type);
+    ($key => @convert==1 ? $convert[0] : \@convert);
+}
 
 1;
