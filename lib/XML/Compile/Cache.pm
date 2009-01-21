@@ -1,4 +1,4 @@
-# Copyrights 2008 by Mark Overmeer.
+# Copyrights 2008-2009 by Mark Overmeer.
 #  For other contributors see ChangeLog.
 # See the manual pages for details on the licensing terms.
 # Pod stripped from pm file by OODoc 1.05.
@@ -7,7 +7,7 @@ use strict;
 
 package XML::Compile::Cache;
 use vars '$VERSION';
-$VERSION = '0.14';
+$VERSION = '0.90';
 
 use base 'XML::Compile::Schema';
 
@@ -43,8 +43,11 @@ sub init($)
 
     if(my $anyelem = $args->{any_element})
     {   if($anyelem eq 'ATTEMPT')
-        {   push @{$self->{XCC_ropts}}
-              , any_element => sub {$self->_convertAnyElementReader(@_)};
+        {   my $code = sub {$self->_convertAnyElementReader(@_)};
+            if(ref $self->{XCC_ropts} eq 'ARRAY')
+            {   push @{$self->{XCC_ropts}}, any_element => $code }
+            else
+            {   $self->{XCC_ropts}{any_element} = $code }
         }
     }
 
@@ -57,8 +60,16 @@ sub init($)
 sub prefixes(@)
 {   my $self = shift;
     my ($p, $a) = @$self{ qw/XCC_namespaces XCC_prefixes/ };
-    while(@_)
-    {   my ($prefix, $ns) = (shift, shift);
+    @_ or return $p;
+
+    my @pairs
+      = @_ > 1               ? @_
+      : ref $_[0] eq 'ARRAY' ? @{$_[0]}
+      : ref $_[0] eq 'HASH'  ? %{$_[0]}
+      : error __x"prefixes() expects list of PAIRS, and ARRAY or a HASH";
+
+    while(@pairs)
+    {   my ($prefix, $ns) = (shift @pairs, shift @pairs);
         $p->{$ns} ||= { uri => $ns, prefix => $prefix, used => 0 };
 
         if(my $def = $a->{$prefix})
@@ -223,23 +234,14 @@ sub mergeCompileOptions(@)
 
     while(@take)
     {   my ($opt, $val) = (shift @take, shift @take);
-        if($opt eq 'hook')
-        {   ($opt, $val) = (hooks => (ref $val eq 'ARRAY' ? {@$val} : $val));
-        }
-
         if($opt eq 'prefixes')
         {   my %t = $self->_namespaceTable($val, 1, 0);  # expand
             @p{keys %t} = values %t;   # overwrite old def if exists
         }
-        elsif($opt eq 'hooks')
-        {   my @hooks = ref $val eq 'ARRAY' ? @$val : defined $val ? $val : ();
-            foreach my $hook (grep {$_->{type}} @hooks)   # rewrite prefixed names
-            {   my $types = $hook->{type};
-                $hook->{type} =
-                  [ map {ref $_ eq 'Regexp' ? $_ : $self->findName($_)}
-                       ref $types eq 'ARRAY' ? @$types : $types ];
-            }
-            unshift @{$opts{hooks}}, @hooks;
+        elsif($opt eq 'hooks' || $opt eq 'hook')
+        {   my $hooks = @{$self->_cleanup_hooks($val)};
+            unshift @{$opts{hooks}}, ref $hooks eq 'ARRAY' ? @$hooks : $hooks
+                if $hooks;
         }
         elsif($opt eq 'typemap')
         {   $val ||= {};
@@ -256,6 +258,20 @@ sub mergeCompileOptions(@)
     %opts;
 }
 
+# rewrite hooks
+sub _cleanup_hooks($)
+{   my ($self, $hooks) = @_;
+    $hooks or return;
+
+    foreach my $hook (ref $hooks eq 'ARRAY' ? @$hooks : $hooks)
+    {   my $types = $hook->{type} or next;
+        $hook->{type} =
+           [ map {ref $_ eq 'Regexp' ? $_ : $self->findName($_)}
+                       ref $types eq 'ARRAY' ? @$types : $types ];
+    }
+    $hooks;
+}
+
 sub _need($)
 {    $_[1] eq 'READER' ? (1,0)
    : $_[1] eq 'WRITER' ? (0,1)
@@ -263,10 +279,26 @@ sub _need($)
    : error __x"use READER, WRITER or RW, not {dir}", dir => $_[1];
 }
 
-# support 
+# support prefixes on types
+sub addHook(@)
+{   my $self = shift;
+    my $hook = @_ > 1 ? {@_} : shift;
+    $self->_cleanup_hooks($hook);
+    $self->SUPER::addHook($hook);
+}
+
 sub compile($$@)
-{   my ($self, $action, $type, @args) = @_;
-    $self->SUPER::compile($action, $self->findName($type), @args);
+{   my ($self, $action, $type, %args) = @_;
+    $self->_cleanup_hooks($args{hook});
+    $self->_cleanup_hooks($args{hooks});
+    $self->SUPER::compile($action, $self->findName($type), %args);
+}
+
+sub template($$@)
+{   my ($self, $action, $type, %args) = @_;
+    $self->_cleanup_hooks($args{hook});
+    $self->_cleanup_hooks($args{hooks});
+    $self->SUPER::template($action, $self->findName($type), %args);
 }
 
 #----------------------
