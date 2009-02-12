@@ -144,7 +144,7 @@ See L<XML::Compile::Schema/"Accessors">
 
 =back
 
-$obj-E<gt>B<addKeyRewrite>(CODE|HASH, CODE|HASH, ...)
+$obj-E<gt>B<addKeyRewrite>(PREDEF|CODE|HASH, ...)
 
 =over 4
 
@@ -237,6 +237,14 @@ You may also provide an ARRAY of pairs or a HASH.
 
 =back
 
+$obj-E<gt>B<useSchema>(SCHEMA, [SCHEMA])
+
+=over 4
+
+See L<XML::Compile::Schema/"Accessors">
+
+=back
+
 =head2 Compilers
 
 $obj-E<gt>B<compile>(('READER'|'WRITER'), TYPE, OPTIONS)
@@ -261,7 +269,7 @@ much time as they want to... and running should be as fast as possible.
 
 =back
 
-$obj-E<gt>B<dataToXML>(NODE|REF-XML-STRING|XML-STRING|FILENAME|FILEHANDLE|KNOWN)
+XML::Compile::Cache-E<gt>B<dataToXML>(NODE|REF-XML-STRING|XML-STRING|FILENAME|FILEHANDLE|KNOWN)
 
 =over 4
 
@@ -385,6 +393,8 @@ example: of findName()
 
 $obj-E<gt>B<findSchemaFile>(FILENAME)
 
+XML::Compile::Cache-E<gt>B<findSchemaFile>(FILENAME)
+
 =over 4
 
 See L<XML::Compile/"Administration">
@@ -475,8 +485,8 @@ Error: don't known how to interpret XML data
 
 =head1 SEE ALSO
 
-This module is part of XML-Compile-Cache distribution version 0.90,
-built on January 21, 2009. Website: F<http://perl.overmeer.net/xml-compile/>
+This module is part of XML-Compile-Cache distribution version 0.91,
+built on February 12, 2009. Website: F<http://perl.overmeer.net/xml-compile/>
 
 All modules in this suite:
 L<XML::Compile>,

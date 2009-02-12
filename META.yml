@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name:                XML-Compile-Cache
-version:             0.90
+version:             0.91
 abstract:            Cache compiled XML translators
 license:             perl
 author:              
@@ -11,7 +11,7 @@ requires:
     Log::Report:                   0.19
     Test::More:                    0.54
     Test::Pod:                     1.00
-    XML::Compile:                  0.92
+    XML::Compile:                  1.02
     XML::Compile::Tester:          0.02
 meta-spec:
     url:     http://module-build.sourceforge.net/META-spec-v1.3.html
