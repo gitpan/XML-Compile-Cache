@@ -45,6 +45,7 @@ XML::Compile::Cache-E<gt>B<new>(OPTIONS)
  Option            --Defined in     --Default
  allow_undeclared                     <false>
  any_element                          'SKIP_ALL'
+ block_namespace     XML::Compile::Schema  []
  hook                XML::Compile::Schema  undef
  hooks               XML::Compile::Schema  []
  ignore_unused_tags  XML::Compile::Schema  <false>
@@ -75,6 +76,8 @@ ATTEMPT will convert all any elements, applying the reader for
 each element found.
 
 =back
+
+. block_namespace => NAMESPACE|TYPE|HASH|CODE|ARRAY
 
 . hook => ARRAY-WITH-HOOKDATA | HOOK
 
@@ -195,6 +198,14 @@ declared cleanly.
 
 =back
 
+$obj-E<gt>B<blockNamespace>(NAMESPACE|TYPE|HASH|CODE|ARRAY)
+
+=over 4
+
+See L<XML::Compile::Schema/"Accessors">
+
+=back
+
 $obj-E<gt>B<hooks>
 
 =over 4
@@ -216,6 +227,15 @@ $obj-E<gt>B<prefixFor>(URI)
 =over 4
 
 Lookup the preferred prefix for the URI.
+
+=back
+
+$obj-E<gt>B<prefixed>(TYPE)
+
+=over 4
+
+Translate the fully qualified TYPE into a prefixed version.  Will produce
+an error if the namespace is unknown.
 
 =back
 
@@ -485,8 +505,8 @@ Error: don't known how to interpret XML data
 
 =head1 SEE ALSO
 
-This module is part of XML-Compile-Cache distribution version 0.91,
-built on February 12, 2009. Website: F<http://perl.overmeer.net/xml-compile/>
+This module is part of XML-Compile-Cache distribution version 0.92,
+built on May 28, 2009. Website: F<http://perl.overmeer.net/xml-compile/>
 
 All modules in this suite:
 L<XML::Compile>,

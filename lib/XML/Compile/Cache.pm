@@ -7,7 +7,7 @@ use strict;
 
 package XML::Compile::Cache;
 use vars '$VERSION';
-$VERSION = '0.91';
+$VERSION = '0.92';
 
 use base 'XML::Compile::Schema';
 
@@ -80,6 +80,7 @@ sub prefixes(@)
         }
         else
         {   $a->{$prefix} = $p->{$ns};
+            trace "register prefix $prefix for $ns";
         }
     }
     $p;
@@ -93,6 +94,18 @@ sub prefixFor($)
 {   my $def = $_[0]->{XCC_namespaces}{$_[1]} or return ();
     $def->{used}++;
     $def->{prefix};
+}
+
+
+sub prefixed($)
+{   my ($self, $type) = @_;
+    my ($ns, $local) = unpack_type $type;
+    $ns or return $local;
+    my $prefix = $self->prefixFor($ns);
+    defined $prefix
+        or error __x"no prefix known for namespace {ns}", ns => $ns;
+
+    length $prefix ? "$prefix:$local" : $local;
 }
 
 
@@ -289,6 +302,9 @@ sub addHook(@)
 
 sub compile($$@)
 {   my ($self, $action, $type, %args) = @_;
+    error __x"compile() requires action and type parameters"
+        if @_ < 3;
+
     $self->_cleanup_hooks($args{hook});
     $self->_cleanup_hooks($args{hooks});
     $self->SUPER::compile($action, $self->findName($type), %args);
@@ -296,6 +312,9 @@ sub compile($$@)
 
 sub template($$@)
 {   my ($self, $action, $type, %args) = @_;
+    error __x"template() requires action and type parameters"
+        if @_ < 3;
+
     $self->_cleanup_hooks($args{hook});
     $self->_cleanup_hooks($args{hooks});
     $self->SUPER::template($action, $self->findName($type), %args);
@@ -391,8 +410,11 @@ sub _convertAnyElementReader(@)
 {   my ($self, $type, $nodes, $path, $read, $args) = @_;
 
     my $reader  = try { $self->reader($type) };
-#warn "TRY CONVERT $type; $@" if $@;
-    !$@ && $reader or return ($type => $nodes);
+    if($@)
+    {   trace "cannot auto-convert 'any' $type: ".$@->wasFatal->message;
+        return ($type => $nodes);
+    }
+    trace "auto-convert 'any' $type";
 
     my @nodes   = ref $nodes eq 'ARRAY' ? @$nodes : $nodes;
     my @convert = map {$reader->($_)} @nodes;
