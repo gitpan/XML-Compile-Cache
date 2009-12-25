@@ -20,7 +20,7 @@ XML::Compile::Cache - Cache compiled XML translators
  $cache->compileAll('RW');
 
  # get the cached code ref for the reader
- my $reader = $cache->reader($type);
+ my $reader = $cache->reader($type, @opts);
  use Data::Dumper;
  print Dumper $reader->($xml);
 
@@ -68,12 +68,17 @@ they are consistent over each use of the type.
 
 =back
 
-. any_element => CODE|'TAKE_ALL'|'SKIP_ALL'|'ATTEMPT'
+. any_element => CODE|'TAKE_ALL'|'SKIP_ALL'|'ATTEMPT'|'SLOPPY'
 
 =over 4
 
-ATTEMPT will convert all any elements, applying the reader for
-each element found.
+reader: C<ATTEMPT> will convert all any elements, applying the reader for
+each element found. When an element is not found in a schema, it will
+be included as XML::LibXML::Element node.
+
+[0.93] reader: With C<SLOPPY>, first automatic typed conversion is
+attempted. But is the type is not known, XML::LibXML::Simple subroutine XMLin
+is called to the resque.
 
 =back
 
@@ -485,28 +490,10 @@ See L<XML::Compile/"Administration">
 
 =head1 DETAILS
 
-=head1 DIAGNOSTICS
-
-Error: cannot find pre-installed name-space files
-
-=over 4
-
-Use C<$ENV{SCHEMA_LOCATION}> or L<new(schema_dirs)|XML::Compile/"Constructors"> to express location
-of installed name-space files, which came with the L<XML::Compile|XML::Compile>
-distribution package.
-
-=back
-
-Error: don't known how to interpret XML data
-
-=over 4
-
-=back
-
 =head1 SEE ALSO
 
-This module is part of XML-Compile-Cache distribution version 0.92,
-built on May 28, 2009. Website: F<http://perl.overmeer.net/xml-compile/>
+This module is part of XML-Compile-Cache distribution version 0.93,
+built on December 25, 2009. Website: F<http://perl.overmeer.net/xml-compile/>
 
 All modules in this suite:
 L<XML::Compile>,
@@ -516,8 +503,10 @@ L<XML::Compile::SOAP::Daemon>,
 L<XML::Compile::Tester>,
 L<XML::Compile::Cache>,
 L<XML::Compile::Dumper>,
-L<XML::Rewrite>,
+L<XML::Compile::RPC>,
 and
+L<XML::Rewrite>,
+L<XML::ExistDB>,
 L<XML::LibXML::Simple>.
 
 Please post questions or ideas to the mailinglist at
