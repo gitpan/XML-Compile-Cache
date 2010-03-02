@@ -1,4 +1,4 @@
-# Copyrights 2008-2009 by Mark Overmeer.
+# Copyrights 2008-2010 by Mark Overmeer.
 #  For other contributors see ChangeLog.
 # See the manual pages for details on the licensing terms.
 # Pod stripped from pm file by OODoc 1.06.
@@ -7,7 +7,7 @@ use strict;
 
 package XML::Compile::Cache;
 use vars '$VERSION';
-$VERSION = '0.93';
+$VERSION = '0.94';
 
 use base 'XML::Compile::Schema';
 
@@ -40,7 +40,7 @@ sub init($)
     my $p = $self->{XCC_namespaces}
           = $self->_namespaceTable(delete $args->{prefixes});
     my %a = map { ($_->{prefix} => $_) } values %$p;
-    $self->{XCC_prefixes} = \%a;
+    $self->{XCC_prefixes} = keys %$p ? \%a : $p;
 
     if(my $anyelem = $args->{any_element})
     {   my $code = $anyelem eq 'ATTEMPT' ? sub {$self->_convertAnyTyped(@_)}
@@ -120,7 +120,7 @@ sub allowUndeclared(;$)
 
 sub compileAll(;$$)
 {   my ($self, $need, $usens) = @_;
-    my ($need_r, $need_w) = $self->_need($need);
+    my ($need_r, $need_w) = $self->_need($need || 'RW');
 
     if($need_r)
     {   while(my($type, $opts) = each %{$self->{XCC_dropts}})
@@ -264,8 +264,8 @@ sub mergeCompileOptions(@)
         defined $val or next;
 
         if($opt eq 'prefixes')
-        {   my %t = $self->_namespaceTable($val, 1, 0);  # expand
-            @p{keys %t} = values %t;   # overwrite old def if exists
+        {   my $t = $self->_namespaceTable($val, 1, 0);  # expand
+            @p{keys %$t} = values %$t;   # overwrite old def if exists
         }
         elsif($opt eq 'hooks' || $opt eq 'hook')
         {   my $hooks = $self->_cleanup_hooks($val);
