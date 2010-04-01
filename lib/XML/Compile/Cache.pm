@@ -7,7 +7,7 @@ use strict;
 
 package XML::Compile::Cache;
 use vars '$VERSION';
-$VERSION = '0.94';
+$VERSION = '0.95';
 
 use base 'XML::Compile::Schema';
 
@@ -81,7 +81,7 @@ sub prefixes(@)
         }
         else
         {   $a->{$prefix} = $p->{$ns};
-            trace "register prefix $prefix for $ns";
+            trace "register prefix $prefix for '$ns'";
         }
     }
     $p;
@@ -128,7 +128,7 @@ sub compileAll(;$$)
             {   my ($myns, $local) = unpack_type $type;
                 next if $usens eq $myns;
             }
-            $self->{XCC_rcode}{$type} ||= $self->_createReader($type, @$opts);
+            $self->{XCC_rcode}{$type} ||= $self->compile(READER=>$type,@$opts);
         }
     }
 
@@ -138,7 +138,7 @@ sub compileAll(;$$)
             {   my ($myns, $local) = unpack_type $type;
                 next if $usens eq $myns;
             }
-            $self->{XCC_wcode}{$type} ||= $self->_createWriter($type, @$opts);
+            $self->{XCC_wcode}{$type} ||= $self->compile(WRITER=>$type,@$opts);
         }
     }
 }
@@ -163,7 +163,7 @@ sub reader($@)
             { for(my $i=0; $i<@$ur; $i++) {$differs++ if $ur->[$i] ne $_[$i]} } 
 
             # do not use cached version when options differ
-            return $self->_createReader($type, @_)
+            return $self->compile(READER => $type, @_)
                 if $differs;
         }
         else
@@ -174,17 +174,7 @@ sub reader($@)
          { error __x"type {name} is only declared as writer", name => $name }
     else { error __x"type {name} is not declared", name => $name }
 
-    $readers->{$type} ||= $self->_createReader($type, @_);
-}
-
-sub _createReader($@)
-{   my ($self, $type) = (shift, shift);
-    trace "create reader for $type";
-
-    $self->compile(READER => $type,
-      , $self->mergeCompileOptions($self->{XCC_opts}
-          , $self->{XCC_ropts}, $self->{XCC_dropts}{$type}, \@_)
-      );
+    $readers->{$type} ||= $self->compile(READER => $type, @_);
 }
 
 
@@ -207,7 +197,7 @@ sub writer($)
             { for(my $i=0; $i<@$ur; $i++) {$differs++ if $ur->[$i] ne $_[$i]} }
 
             # do not use cached version when options differ
-            return $self->_createWriter($type, @_)
+            return $self->compile(WRITER => $type, @_)
                 if $differs;
         }
         else
@@ -221,16 +211,7 @@ sub writer($)
     {   error __x"type {name} is not declared", name => $name;
     }
 
-    $writers->{$type} ||= $self->_createWriter($type, @_);
-}
-
-sub _createWriter($)
-{   my ($self, $type) = @_;
-    
-    trace "create writer for $type";
-    $self->compile(WRITER => $type, $self->mergeCompileOptions
-       ($self->{XCC_opts}, $self->{XCC_wopts}, $self->{XCC_dwopts}{$type}, \@_)
-      );
+    $writers->{$type} ||= $self->compile(WRITER => $type, @_);
 }
 
 sub template($$)
@@ -251,13 +232,19 @@ sub template($$)
 # cases, the new values are added.  This method knows how some of the options
 # of ::compile() behave.  [last update X::C v0.98]
 
-sub mergeCompileOptions(@)
-{   my $self = shift;
+sub mergeCompileOptions($$$)
+{   my ($self, $action, $type, $opts) = @_;
+    my @action_opts
+      = $action eq 'READER'
+      ? ($self->{XCC_ropts}, $self->{XCC_dropts}{$type})
+      : ($self->{XCC_wopts}, $self->{XCC_dwopts}{$type});
+
     my %p    = %{$self->{XCC_namespaces}};
     my %opts = (prefixes => \%p, hooks => [], typemap => {}, xsi_type => {});
 
     # flatten list of parameters
-    my @take = map {!defined $_ ? () : ref $_ eq 'ARRAY' ? @$_ : %$_ } @_;
+    my @take = map {!defined $_ ? () : ref $_ eq 'ARRAY' ? @$_ : %$_ }
+        $self->{XCC_opts}, @action_opts, $opts;
 
     while(@take)
     {   my ($opt, $val) = (shift @take, shift @take);
@@ -324,16 +311,31 @@ sub addHook(@)
 }
 
 sub compile($$@)
-{   my ($self, $action, $type, %args) = @_;
-    error __x"compile() requires action and type parameters"
-        if @_ < 3;
+{   my ($self, $action, $elem) = splice @_, 0, 3;
+    defined $elem
+        or error __x"compile() requires action and type parameters";
 
-    $self->_cleanup_hooks($args{hook});
-    $self->_cleanup_hooks($args{hooks});
-    $self->SUPER::compile($action, $self->findName($type), %args);
+    $self->SUPER::compile
+      ( $action => $self->findName($elem)
+      , $self->mergeCompileOptions($action, $elem, \@_)
+      );
+}
+
+sub compileType($$@)
+{   my ($self, $action, $type) = splice @_, 0, 3;
+    defined $type
+        or error __x"compileType() requires action and type parameters";
+
+    $self->SUPER::compileType
+      ( $action => $self->findName($type)
+      , $self->mergeCompileOptions($action, $type, \@_)
+      );
 }
 
 #----------------------
+
+#----------------------
+
 
 sub declare($$@)
 {   my ($self, $need, $names, @opts) = @_;

@@ -325,7 +325,7 @@ example:
 
 =back
 
-$obj-E<gt>B<template>('XML'|'PERL', TYPE, OPTIONS)
+$obj-E<gt>B<template>('XML'|'PERL', ELEMENT, OPTIONS)
 
 =over 4
 
@@ -488,12 +488,14 @@ See L<XML::Compile/"Administration">
 
 =back
 
+=head2 Administration
+
 =head1 DETAILS
 
 =head1 SEE ALSO
 
-This module is part of XML-Compile-Cache distribution version 0.94,
-built on March 02, 2010. Website: F<http://perl.overmeer.net/xml-compile/>
+This module is part of XML-Compile-Cache distribution version 0.95,
+built on April 01, 2010. Website: F<http://perl.overmeer.net/xml-compile/>
 
 All modules in this suite:
 L<XML::Compile>,
