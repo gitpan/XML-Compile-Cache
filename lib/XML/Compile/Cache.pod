@@ -494,8 +494,8 @@ See L<XML::Compile/"Administration">
 
 =head1 SEE ALSO
 
-This module is part of XML-Compile-Cache distribution version 0.95,
-built on April 01, 2010. Website: F<http://perl.overmeer.net/xml-compile/>
+This module is part of XML-Compile-Cache distribution version 0.96,
+built on June 10, 2010. Website: F<http://perl.overmeer.net/xml-compile/>
 
 All modules in this suite:
 L<XML::Compile>,
