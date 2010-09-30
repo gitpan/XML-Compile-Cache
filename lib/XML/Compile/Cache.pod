@@ -240,7 +240,11 @@ $obj-E<gt>B<prefixed>(TYPE)
 =over 4
 
 Translate the fully qualified TYPE into a prefixed version.  Will produce
-an error if the namespace is unknown.
+undef if the namespace is unknown.
+
+example: 
+
+   print $schema->prefixed($type} || $type;
 
 =back
 
@@ -494,21 +498,22 @@ See L<XML::Compile/"Administration">
 
 =head1 SEE ALSO
 
-This module is part of XML-Compile-Cache distribution version 0.96,
-built on June 10, 2010. Website: F<http://perl.overmeer.net/xml-compile/>
+This module is part of XML-Compile-Cache distribution version 0.97,
+built on September 30, 2010. Website: F<http://perl.overmeer.net/xml-compile/>
 
 All modules in this suite:
 L<XML::Compile>,
 L<XML::Compile::SOAP>,
 L<XML::Compile::SOAP12>,
 L<XML::Compile::SOAP::Daemon>,
+L<XML::Compile::SOAP::WSA>,
 L<XML::Compile::Tester>,
 L<XML::Compile::Cache>,
 L<XML::Compile::Dumper>,
 L<XML::Compile::RPC>,
 and
 L<XML::Rewrite>,
-L<XML::ExistDB>,
+L<XML::eXistDB>,
 L<XML::LibXML::Simple>.
 
 Please post questions or ideas to the mailinglist at

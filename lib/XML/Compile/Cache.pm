@@ -7,7 +7,7 @@ use strict;
 
 package XML::Compile::Cache;
 use vars '$VERSION';
-$VERSION = '0.96';
+$VERSION = '0.97';
 
 use base 'XML::Compile::Schema';
 
@@ -224,13 +224,7 @@ sub writer($)
 sub template($$)
 {   my ($self, $action, $name) = (shift, shift, shift);
     my $type   = $self->findName($name);
-
-    my @rwopts = $action eq 'PERL'
-      ? ($self->{XCC_ropts}, $self->{XCC_dropts}{$type})
-      : ($self->{XCC_wopts}, $self->{XCC_dwopts}{$type});
-
-    my @opts = $self->mergeCompileOptions($self->{XCC_opts}, @rwopts, \@_);
-
+    my @opts = $self->mergeCompileOptions($action, $type, \@_);
     $self->SUPER::template($action, $type, @opts);
 }
 
@@ -241,8 +235,9 @@ sub template($$)
 
 sub mergeCompileOptions($$$)
 {   my ($self, $action, $type, $opts) = @_;
+
     my @action_opts
-      = $action eq 'READER'
+      = ($action eq 'READER' || $action eq 'PERL')
       ? ($self->{XCC_ropts}, $self->{XCC_dropts}{$type})
       : ($self->{XCC_wopts}, $self->{XCC_dwopts}{$type});
 
@@ -353,7 +348,7 @@ sub declare($$@)
 
     foreach my $name (ref $names eq 'ARRAY' ? @$names : $names)
     {   my $type = $self->findName($name);
-        trace "declare $type";
+        trace "declare $type $need";
 
         if($need_r)
         {   defined $self->{XCC_dropts}{$type}
