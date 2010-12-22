@@ -55,7 +55,8 @@ XML::Compile::Cache-E<gt>B<new>(OPTIONS)
  opts_writers                         []
  prefixes                             <smart>
  schema_dirs         XML::Compile     undef
- typemap             XML::Compile::Schema  {}
+ typemap                              {}
+ xsi_type                             {}
 
 . allow_undeclared => BOOLEAN
 
@@ -130,7 +131,9 @@ processing, you will need to specify a HASH.
 
 . schema_dirs => DIRECTORY|ARRAY-OF-DIRECTORIES
 
-. typemap => HASH
+. typemap => HASH|ARRAY
+
+. xsi_type => HASH|ARRAY
 
 =back
 
@@ -266,11 +269,27 @@ You may also provide an ARRAY of pairs or a HASH.
 
 =back
 
+$obj-E<gt>B<typemap>([HASH|ARRAY|PAIRS])
+
+=over 4
+
+[0.98] Add global knowledge on typemaps.  Returns the typemap.
+
+=back
+
 $obj-E<gt>B<useSchema>(SCHEMA, [SCHEMA])
 
 =over 4
 
 See L<XML::Compile::Schema/"Accessors">
+
+=back
+
+$obj-E<gt>B<xsiType>([HASH|ARRAY|LIST])
+
+=over 4
+
+[0.98] add global xsi_type declarations.  Returns the xsiType set.
 
 =back
 
@@ -284,13 +303,13 @@ See L<XML::Compile::Schema/"Compilers">
 
 =back
 
-$obj-E<gt>B<compileAll>(['READER'|'WRITER'|'RW', [NAMESPACE]])
+$obj-E<gt>B<compileAll>(['READERS'|'WRITERS'|'RW', [NAMESPACE]])
 
 =over 4
 
-Compile all the declared readers and writers (default 'RW').  You may
-also select to pre-compile only the READERs or only the WRITERs.  The
-selection can be limited further by specifying a namespace.
+Compile all the declared readers and writers with the default 'RW').  You may
+also select to pre-compile only the READERS or only the WRITERS.  The
+selection can be limited further by specifying a NAMESPACE.
 
 By default, the processors are only compiled when used.  This method is
 especially useful in a daemon process, where preparations can take as
@@ -381,6 +400,14 @@ example:
         ->declare(RW     => '{myns}mylocal');
 
   $cache->declare(WRITER => [ 'xsd:int', '{http://}aap' ]);
+
+=back
+
+$obj-E<gt>B<doesExtend>(EXTTYPE, BASETYPE)
+
+=over 4
+
+See L<XML::Compile::Schema/"Administration">
 
 =back
 
@@ -492,16 +519,14 @@ See L<XML::Compile/"Administration">
 
 =back
 
-=head2 Administration
-
 =head1 DETAILS
 
 =head1 SEE ALSO
 
-This module is part of XML-Compile-Cache distribution version 0.97,
-built on September 30, 2010. Website: F<http://perl.overmeer.net/xml-compile/>
+This module is part of XML-Compile-Cache distribution version 0.98,
+built on December 22, 2010. Website: F<http://perl.overmeer.net/xml-compile/>
 
-All modules in this suite:
+Other distributions in this suite:
 L<XML::Compile>,
 L<XML::Compile::SOAP>,
 L<XML::Compile::SOAP12>,
@@ -511,14 +536,14 @@ L<XML::Compile::Tester>,
 L<XML::Compile::Cache>,
 L<XML::Compile::Dumper>,
 L<XML::Compile::RPC>,
-and
 L<XML::Rewrite>,
 L<XML::eXistDB>,
+and
 L<XML::LibXML::Simple>.
 
 Please post questions or ideas to the mailinglist at
 F<http://lists.scsys.co.uk/cgi-bin/mailman/listinfo/xml-compile>
-For life contact with other developers, visit the C<#xml-compile> channel
+For live contact with other developers, visit the C<#xml-compile> channel
 on C<irc.perl.org>.
 
 =head1 LICENSE
