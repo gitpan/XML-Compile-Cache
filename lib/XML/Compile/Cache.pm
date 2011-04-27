@@ -1,13 +1,13 @@
-# Copyrights 2008-2010 by Mark Overmeer.
+# Copyrights 2008-2011 by Mark Overmeer.
 #  For other contributors see ChangeLog.
 # See the manual pages for details on the licensing terms.
-# Pod stripped from pm file by OODoc 1.06.
+# Pod stripped from pm file by OODoc 2.00.
 use warnings;
 use strict;
 
 package XML::Compile::Cache;
 use vars '$VERSION';
-$VERSION = '0.98';
+$VERSION = '0.99';
 
 use base 'XML::Compile::Schema';
 
@@ -38,26 +38,10 @@ sub init($)
     $self->{XCC_readers} = {};
     $self->{XCC_writers} = {};
 
-    my $p = $self->{XCC_namespaces}
-          = $self->_namespaceTable(delete $args->{prefixes});
-    my %a = map { ($_->{prefix} => $_) } values %$p;
-    $self->{XCC_prefixes} = keys %$p ? \%a : $p;
+    $self->prefixes($args->{prefixes});
     $self->typemap($args->{typemap});
     $self->xsiType($args->{xsi_type});
-
-    if(my $anyelem = $args->{any_element})
-    {   # the "$self" in XCC_ropts would create a ref-cycle, causing a
-        # memory leak.
-        my $s = $self; weaken $s;
-
-        my $code = $anyelem eq 'ATTEMPT' ? sub {$s->_convertAnyTyped(@_)}
-                 : $anyelem eq 'SLOPPY'  ? sub {$s->_convertAnySloppy(@_)}
-                 :                         $anyelem;
-
-        if(ref $self->{XCC_ropts} eq 'ARRAY')
-             { push @{$self->{XCC_ropts}}, any_element => $code }
-        else { $self->{XCC_ropts}{any_element} = $code }
-    }
+    $self->anyElement($args->{any_element} || 'SKIP_ALL');
 
     $self;
 }
@@ -66,16 +50,18 @@ sub init($)
 
 
 sub prefixes(@)
-{   my $self = shift;
-    my ($p, $a) = @$self{ qw/XCC_namespaces XCC_prefixes/ };
-    @_ or return $p;
+{   my $self  = shift;
+    my $p     = $self->{XCC_namespaces} ||= {};
+    my $first = shift
+        or return $p;
 
     my @pairs
-      = @_ > 1               ? @_
-      : ref $_[0] eq 'ARRAY' ? @{$_[0]}
-      : ref $_[0] eq 'HASH'  ? %{$_[0]}
-      : error __x"prefixes() expects list of PAIRS, and ARRAY or a HASH";
+      = @_                    ? ($first, @_)
+      : ref $first eq 'ARRAY' ? @$first
+      : ref $first eq 'HASH'  ? %$first
+      : error __x"prefixes() expects list of PAIRS, an ARRAY or a HASH";
 
+    my $a    = $self->{XCC_prefixes}   ||= {};
     while(@pairs)
     {   my ($prefix, $ns) = (shift @pairs, shift @pairs);
         $p->{$ns} ||= { uri => $ns, prefix => $prefix, used => 0 };
@@ -148,6 +134,41 @@ sub xsiType(@)
 sub allowUndeclared(;$)
 {   my $self = shift;
     @_ ? ($self->{XCC_undecl} = shift) : $self->{XCC_undecl};
+}
+
+
+sub addCompileOptions(@)
+{   my $self = shift;
+    my $need = @_%2 ? shift : 'RW';
+
+    my $set
+      = $need eq 'RW'      ? $self->{XCC_opts}
+      : $need eq 'READERS' ? $self->{XCC_ropts}
+      : $need eq 'WRITERS' ? $self->{XCC_wopts}
+      : error __x"addCompileOptions() requires option set name, not {got}"
+          , got => $need;
+
+    if(ref $set eq 'HASH')
+         { while(@_) { my $k = shift; $set->{$k} = shift } }
+    else { push @$set, @_ }
+    $set;
+}
+
+
+sub anyElement($)
+{   my ($self, $anyelem) = @_;
+
+    # the "$self" in XCC_ropts would create a ref-cycle, causing a
+    # memory leak.
+    my $s = $self; weaken $s;
+
+    my $code
+      = $anyelem eq 'ATTEMPT' ? sub {$s->_convertAnyTyped(@_)}
+      : $anyelem eq 'SLOPPY'  ? sub {$s->_convertAnySloppy(@_)}
+      :                         $anyelem;
+     
+    $self->addCompileOptions(READERS => any_element => $code);
+    $code;
 }
 
 #----------------------
@@ -251,9 +272,12 @@ sub writer($)
     $writers->{$type} ||= $self->compile(WRITER => $type, @_);
 }
 
-sub template($$)
+sub template($$@)
 {   my ($self, $action, $name) = (shift, shift, shift);
-    my $type   = $self->findName($name);
+    $action =~ m/^[A-Z]*$/
+        or error __x"missing or illegal action parameter to template()";
+
+    my $type  = $self->findName($name);
     my @opts = $self->mergeCompileOptions($action, $type, \@_);
     $self->SUPER::template($action, $type, @opts);
 }

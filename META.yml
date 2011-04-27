@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name:               XML-Compile-Cache
-version:            0.98
+version:            0.99
 abstract:           Cache compiled XML translators
 author:
     - Mark Overmeer
@@ -14,7 +14,7 @@ requires:
     Log::Report:          0.19
     Test::More:           0.54
     Test::Pod:            1.00
-    XML::Compile:         1.1
+    XML::Compile:         1.2
     XML::Compile::Tester:  0.02
     XML::LibXML::Simple:  0.13
 no_index:
