@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name:               XML-Compile-Cache
-version:            0.99
+version:            0.991
 abstract:           Cache compiled XML translators
 author:
     - Mark Overmeer

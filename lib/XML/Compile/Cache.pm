@@ -7,7 +7,7 @@ use strict;
 
 package XML::Compile::Cache;
 use vars '$VERSION';
-$VERSION = '0.99';
+$VERSION = '0.991';
 
 use base 'XML::Compile::Schema';
 
@@ -52,7 +52,8 @@ sub init($)
 sub prefixes(@)
 {   my $self  = shift;
     my $p     = $self->{XCC_namespaces} ||= {};
-    my $first = shift
+    my $first = shift;
+    @_ or defined $first
         or return $p;
 
     my @pairs
