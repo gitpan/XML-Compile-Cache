@@ -1,4 +1,4 @@
-# Copyrights 2008-2011 by Mark Overmeer.
+# Copyrights 2008-2012 by [Mark Overmeer].
 #  For other contributors see ChangeLog.
 # See the manual pages for details on the licensing terms.
 # Pod stripped from pm file by OODoc 2.00.
@@ -7,7 +7,7 @@ use strict;
 
 package XML::Compile::Cache;
 use vars '$VERSION';
-$VERSION = '0.991';
+$VERSION = '0.992';
 
 use base 'XML::Compile::Schema';
 
@@ -117,15 +117,18 @@ sub typemap(@)
 sub xsiType(@)
 {   my $self = shift;
     my $x    = $self->{XCC_xsi_type} ||= {};
-
     my @d    = @_ > 1 ? @_ : !defined $_[0] ? ()
              : ref $_[0] eq 'HASH' ? %{$_[0]} : @{$_[0]};
 
     while(@d)
     {   my $k = $self->findName(shift @d);
         my $a = shift @d;
-        push @{$x->{$k}}, ref $a eq 'ARRAY' ? map ($self->findName($_), @$a)
-          : $self->findName($a);
+        $a = $self->namespaces->autoexpand_xsi_type($k) || []
+            if $a eq 'AUTO';
+
+        push @{$x->{$k}}
+          , ref $a eq 'ARRAY' ? (map $self->findName($_), @$a)
+          :                     $self->findName($a);
     }
 
     $x;
@@ -448,7 +451,8 @@ sub findName($)
     {   return $name if $prefix eq '';   # namespace-less
         trace __x"known prefixes: {prefixes}"
           , prefixes => [ sort keys %{$self->{XCC_prefixes}} ];
-        error __x"unknown name prefix for `{name}'", name => $name;
+        error __x"unknown name prefix `{prefix}' for `{name}'"
+           , prefix => $prefix, name => $name;
     }
 
     length $local ? pack_type($def->{uri}, $local) : $def->{uri};

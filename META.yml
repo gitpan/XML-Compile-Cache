@@ -1,27 +1,26 @@
---- #YAML:1.0
-name:               XML-Compile-Cache
-version:            0.991
-abstract:           Cache compiled XML translators
+---
+abstract: 'Cache compiled XML translators'
 author:
-    - Mark Overmeer
-license:            perl
-distribution_type:  module
-configure_requires:
-    ExtUtils::MakeMaker:  0
+  - 'Mark Overmeer'
 build_requires:
-    ExtUtils::MakeMaker:  0
-requires:
-    Log::Report:          0.19
-    Test::More:           0.54
-    Test::Pod:            1.00
-    XML::Compile:         1.2
-    XML::Compile::Tester:  0.02
-    XML::LibXML::Simple:  0.13
-no_index:
-    directory:
-        - t
-        - inc
-generated_by:       ExtUtils::MakeMaker version 6.56
+  ExtUtils::MakeMaker: 0
+configure_requires:
+  ExtUtils::MakeMaker: 0
+dynamic_config: 1
+generated_by: 'ExtUtils::MakeMaker version 6.6302, CPAN::Meta::Converter version 2.120921'
+license: perl
 meta-spec:
-    url:      http://module-build.sourceforge.net/META-spec-v1.4.html
-    version:  1.4
+  url: http://module-build.sourceforge.net/META-spec-v1.4.html
+  version: 1.4
+name: XML-Compile-Cache
+no_index:
+  directory:
+    - t
+    - inc
+requires:
+  Log::Report: 0.19
+  Test::More: 0.54
+  XML::Compile: 1.27
+  XML::Compile::Tester: 0.02
+  XML::LibXML::Simple: 0.13
+version: 0.992

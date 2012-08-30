@@ -51,6 +51,7 @@ XML::Compile::Cache - Cache compiled XML translators
   opts_readers                         []
   opts_rw                              []
   opts_writers                         []
+  parser_options      XML::Compile     <many>
   prefixes                             <smart>
   schema_dirs         XML::Compile     undef
   typemap                              {}
@@ -88,6 +89,8 @@ with L<declare()|XML::Compile::Cache/"Administration"> and C<opts_readers> or C<
 these.  See L<addCompileOptions()|XML::Compile::Cache/"Accessors">.
 
 =item opts_writers => HASH|ARRAY-of-PAIRS
+
+=item parser_options => HASH|ARRAY
 
 =item prefixes => HASH|ARRAY-of-PAIRS
 
@@ -178,7 +181,7 @@ is called to the resque.
 
 See L<XML::Compile::Schema/"Accessors">
 
-=item $obj-E<gt>B<hooks>
+=item $obj-E<gt>B<hooks>()
 
 See L<XML::Compile::Schema/"Accessors">
 
@@ -224,6 +227,10 @@ See L<XML::Compile::Schema/"Accessors">
 =item $obj-E<gt>B<xsiType>([HASH|ARRAY|LIST])
 
 [0.98] add global xsi_type declarations.  Returns the xsiType set.
+The ARRAY or LIST contains pairs, just like the HASH.
+
+The value component can be 'AUTO' to automatically detect the C<xsi:type>
+extensions.  This does only work for complex types.
 
 =back
 
@@ -245,7 +252,15 @@ By default, the processors are only compiled when used.  This method is
 especially useful in a daemon process, where preparations can take as
 much time as they want to... and running should be as fast as possible.
 
+=item $obj-E<gt>B<dataToXML>(NODE|REF-XML-STRING|XML-STRING|FILENAME|FILEHANDLE|KNOWN)
+
 =item XML::Compile::Cache-E<gt>B<dataToXML>(NODE|REF-XML-STRING|XML-STRING|FILENAME|FILEHANDLE|KNOWN)
+
+See L<XML::Compile/"Compilers">
+
+=item $obj-E<gt>B<initParser>(OPTIONS)
+
+=item XML::Compile::Cache-E<gt>B<initParser>(OPTIONS)
 
 See L<XML::Compile/"Compilers">
 
@@ -268,7 +283,7 @@ example:
   my $getmem = $schema->reader('gml:members');
   my $data   = $getmem->($xml);
 
-=item $obj-E<gt>B<template>('XML'|'PERL', ELEMENT, OPTIONS)
+=item $obj-E<gt>B<template>('XML'|'PERL'|'TREE', ELEMENT, OPTIONS)
 
 See L<XML::Compile::Schema/"Compilers">
 
@@ -319,7 +334,7 @@ example:
 
 See L<XML::Compile::Schema/"Administration">
 
-=item $obj-E<gt>B<elements>
+=item $obj-E<gt>B<elements>()
 
 See L<XML::Compile::Schema/"Administration">
 
@@ -363,7 +378,7 @@ See L<XML::Compile::Schema/"Administration">
 
 See L<XML::Compile/"Administration">
 
-=item $obj-E<gt>B<namespaces>
+=item $obj-E<gt>B<namespaces>()
 
 See L<XML::Compile::Schema/"Administration">
 
@@ -383,7 +398,7 @@ C<R> and/or C<W>.
 
 =back
 
-=item $obj-E<gt>B<types>
+=item $obj-E<gt>B<types>()
 
 See L<XML::Compile::Schema/"Administration">
 
@@ -420,8 +435,8 @@ L<XML::Compile::Util::pack_type()|XML::Compile::Util/"Packing">.
 
 =head1 SEE ALSO
 
-This module is part of XML-Compile-Cache distribution version 0.991,
-built on May 06, 2011. Website: F<http://perl.overmeer.net/xml-compile/>
+This module is part of XML-Compile-Cache distribution version 0.992,
+built on August 31, 2012. Website: F<http://perl.overmeer.net/xml-compile/>
 
 Other distributions in this suite:
 L<XML::Compile>,
@@ -447,7 +462,7 @@ on C<irc.perl.org>.
 
 =head1 LICENSE
 
-Copyrights 2008-2011 by Mark Overmeer. For other contributors see ChangeLog.
+Copyrights 2008-2012 by [Mark Overmeer]. For other contributors see ChangeLog.
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.
