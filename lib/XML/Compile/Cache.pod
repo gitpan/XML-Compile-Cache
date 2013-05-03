@@ -1,3 +1,5 @@
+=encoding utf8
+
 =head1 NAME
 
 XML::Compile::Cache - Cache compiled XML translators
@@ -32,30 +34,38 @@ XML::Compile::Cache - Cache compiled XML translators
  # use the base-class uncached, the XML::Compile::Schema
  my $do = $cache->compile(READER => $type, @opts);
 
+=head1 DESCRIPTION
+
+See L<documentation in base class|XML::Compile::Schema/"DESCRIPTION">.
+ 
 =head1 METHODS
 
+See L<documentation in base class|XML::Compile::Schema/"METHODS">.
+ 
 =head2 Constructors
 
+See L<documentation in base class|XML::Compile::Schema/"Constructors">.
+ 
 =over 4
 
 =item XML::Compile::Cache-E<gt>B<new>(OPTIONS)
 
- -Option            --Defined in     --Default
-  allow_undeclared                     <false>
-  any_element                          'SKIP_ALL'
+ -Option            --Defined in          --Default
+  allow_undeclared                          <false>
+  any_element                               'SKIP_ALL'
   block_namespace     XML::Compile::Schema  []
   hook                XML::Compile::Schema  undef
   hooks               XML::Compile::Schema  []
   ignore_unused_tags  XML::Compile::Schema  <false>
   key_rewrite         XML::Compile::Schema  []
-  opts_readers                         []
-  opts_rw                              []
-  opts_writers                         []
-  parser_options      XML::Compile     <many>
-  prefixes                             <smart>
-  schema_dirs         XML::Compile     undef
-  typemap                              {}
-  xsi_type                             {}
+  opts_readers                              []
+  opts_rw                                   []
+  opts_writers                              []
+  parser_options      XML::Compile          <many>
+  prefixes                                  <smart>
+  schema_dirs         XML::Compile          undef
+  typemap                                   {}
+  xsi_type                                  {}
 
 =over 2
 
@@ -86,7 +96,7 @@ See L<anyElement()|XML::Compile::Cache/"Accessors">.
 
 Options added to both READERs and WRITERS.  Options which are passed
 with L<declare()|XML::Compile::Cache/"Administration"> and C<opts_readers> or C<opts_writers> will overrule
-these.  See L<addCompileOptions()|XML::Compile::Cache/"Accessors">.
+these.  See L<addCompileOptions()|XML::Compile::Cache/"Compilers">.
 
 =item opts_writers => HASH|ARRAY-of-PAIRS
 
@@ -122,12 +132,9 @@ processing, you will need to specify a HASH.
 
 =head2 Accessors
 
+See L<documentation in base class|XML::Compile::Schema/"Accessors">.
+ 
 =over 4
-
-=item $obj-E<gt>B<addCompileOptions>(['READERS'|'WRITERS'|'RW'], OPTIONS)
-
-[0.99] You may provide global compile options with L<new(opts_rw)|XML::Compile::Cache/"Constructors">,
-C<opts_readers> and C<opts_writers>, but also later using this method.
 
 =item $obj-E<gt>B<addHook>(HOOKDATA|HOOK|undef)
 
@@ -174,7 +181,7 @@ each element found. When an element is not found in a schema, it will
 be included as XML::LibXML::Element node.
 
 [0.93] Reader: With C<SLOPPY>, first automatic typed conversion is
-attempted. But is the type is not known, XML::LibXML::Simple subroutine XMLin
+attempted. But is the type is not known, L<XML::LibXML::Simple::XMLin()|XML::LibXML::Simple/"Translators">
 is called to the resque.
 
 =item $obj-E<gt>B<blockNamespace>(NAMESPACE|TYPE|HASH|CODE|ARRAY)
@@ -184,37 +191,6 @@ See L<XML::Compile::Schema/"Accessors">
 =item $obj-E<gt>B<hooks>()
 
 See L<XML::Compile::Schema/"Accessors">
-
-=item $obj-E<gt>B<prefix>(PREFIX)
-
-Lookup a prefix definition.  This returns a HASH with namespace info.
-
-=item $obj-E<gt>B<prefixFor>(URI)
-
-Lookup the preferred prefix for the URI.
-
-=item $obj-E<gt>B<prefixed>(TYPE)
-
-Translate the fully qualified TYPE into a prefixed version.  Will produce
-undef if the namespace is unknown.
-
-example: 
-
-   print $schema->prefixed($type} || $type;
-
-=item $obj-E<gt>B<prefixes>([PAIRS|ARRAY|HASH])
-
-Returns the HASH with prefix to name-space translations.  You should not
-modify the returned HASH.  New PAIRS of prefix to namespace relations
-can be passed.
-
-[0.14]
-If a name-space appears for the second time, then the new prefix will be
-recognized by L<findName()|XML::Compile::Cache/"Administration">, but not used in the output.  When the prefix
-already exists for a different namespace, then an error will be casted.
-
-[0.90]
-You may also provide an ARRAY of pairs or a HASH.
 
 =item $obj-E<gt>B<typemap>([HASH|ARRAY|PAIRS])
 
@@ -234,9 +210,72 @@ extensions.  This does only work for complex types.
 
 =back
 
-=head2 Compilers
+=head2 Prefix management
+
+The cache layer on top of L<XML::Compile::Schema|XML::Compile::Schema> adds smart use of
+prefixes.  Of course, smartness comes with a small performance cost,
+but the code gets much cleaner.
 
 =over 4
+
+=item $obj-E<gt>B<learnPrefixes>(NODE)
+
+[0.993] Take all the prefixes defined in the NODE, and XML::LibXML::Element.
+This is not recursive: only on those defined at the top NODE.
+
+=item $obj-E<gt>B<prefix>(PREFIX)
+
+Lookup a prefix definition.  This returns a HASH with namespace info.
+
+=item $obj-E<gt>B<prefixFor>(URI)
+
+Lookup the preferred prefix for the URI.
+
+=item $obj-E<gt>B<prefixed>(TYPE|(NAMESPACE,LOCAL))
+
+Translate the fully qualified TYPE into a prefixed version.  Will produce
+undef if the namespace is unknown.
+
+[0.993] When your TYPE is not in packed form, you can specify a namespace
+and LOCAL type name as separate arguments.
+
+example: 
+
+   print $schema->prefixed($type) || $type;
+   print $schema->prefixed($ns, $local);
+
+=item $obj-E<gt>B<prefixes>([PAIRS|ARRAY|HASH])
+
+Returns the HASH with prefix to name-space translations.  You should not
+modify the returned HASH: new PAIRS of prefix to namespace relations
+can be passed as arguments.
+
+[0.14]
+If a name-space appears for the second time, then the new prefix will be
+recognized by L<findName()|XML::Compile::Cache/"Administration">, but not used in the output.  When the prefix
+already exists for a different namespace, then an error will be casted.
+
+[0.90]
+You may also provide an ARRAY of pairs or a HASH.
+
+=back
+
+=head2 Compilers
+
+The name of this module refers to its power to administer compiled
+XML encoders (writers) and decoders (readers).  This means that
+your program only need to pass on a ::Cache object (for instance
+a XML::Compile::WSDL11, not a CODE reference for each compiled
+translator.
+
+See L<documentation in base class|XML::Compile::Schema/"Compilers">.
+ 
+=over 4
+
+=item $obj-E<gt>B<addCompileOptions>(['READERS'|'WRITERS'|'RW'], OPTIONS)
+
+[0.99] You may provide global compile options with L<new(opts_rw)|XML::Compile::Cache/"Constructors">,
+C<opts_readers> and C<opts_writers>, but also later using this method.
 
 =item $obj-E<gt>B<compile>(('READER'|'WRITER'), TYPE, OPTIONS)
 
@@ -249,7 +288,7 @@ also select to pre-compile only the READERS or only the WRITERS.  The
 selection can be limited further by specifying a NAMESPACE.
 
 By default, the processors are only compiled when used.  This method is
-especially useful in a daemon process, where preparations can take as
+especially useful in a B<daemon process>, where preparations can take as
 much time as they want to... and running should be as fast as possible.
 
 =item $obj-E<gt>B<dataToXML>(NODE|REF-XML-STRING|XML-STRING|FILENAME|FILEHANDLE|KNOWN)
@@ -311,6 +350,8 @@ example:
 
 =head2 Administration
 
+See L<documentation in base class|XML::Compile::Schema/"Administration">.
+ 
 =over 4
 
 =item $obj-E<gt>B<declare>('READER'|'WRITER'|'RW', TYPE|ARRAY-of-TYPES, OPTIONS)
@@ -319,7 +360,7 @@ Register that the indicated TYPE (or TYPES) may be used, and needs to
 be translated with the OPTIONS (either specified as ARRAY or LIST).
 Specify whether it may get used as READER, WRITER, or both (RW).  If the
 READER and WRITER need different options, then you need to declare them
-seperately; in that case you cannot use RW.
+separately; in that case you cannot use RW.
 
 The TYPE should be understood by L<findName()|XML::Compile::Cache/"Administration">, so may be prefixed.
 
@@ -344,7 +385,7 @@ Translate the NAME specification into a schema defined full type.
 The NAME can be a full type (like '{namespace}localname', usually
 created with L<XML::Compile::Util::pack_type()|XML::Compile::Util/"Packing">) or a prefixed type
 (like 'myns:localname', where C<myns> is defined via L<new(prefixes)|XML::Compile::Cache/"Constructors">
-or L<prefixes()|XML::Compile::Cache/"Accessors">).
+or L<prefixes()|XML::Compile::Cache/"Prefix management">).
 
 When the form is 'myns:' (so without local name), the namespace uri is
 returned.
@@ -408,6 +449,10 @@ See L<XML::Compile/"Administration">
 
 =back
 
+=head1 DETAILS
+
+See L<documentation in base class|XML::Compile::Schema/"DETAILS">.
+ 
 =head1 DESCRIPTIONS
 
 C<XML::Compile::Cache> is the smart brother of L<XML::Compile::Schema|XML::Compile::Schema>;
@@ -435,8 +480,8 @@ L<XML::Compile::Util::pack_type()|XML::Compile::Util/"Packing">.
 
 =head1 SEE ALSO
 
-This module is part of XML-Compile-Cache distribution version 0.992,
-built on August 31, 2012. Website: F<http://perl.overmeer.net/xml-compile/>
+This module is part of XML-Compile-Cache distribution version 0.993,
+built on May 03, 2013. Website: F<http://perl.overmeer.net/xml-compile/>
 
 Other distributions in this suite:
 L<XML::Compile>,
@@ -446,6 +491,7 @@ L<XML::Compile::SOAP::Daemon>,
 L<XML::Compile::SOAP::WSA>,
 L<XML::Compile::C14N>,
 L<XML::Compile::WSS>,
+L<XML::Compile::WSS::Signature>,
 L<XML::Compile::Tester>,
 L<XML::Compile::Cache>,
 L<XML::Compile::Dumper>,
@@ -457,12 +503,13 @@ L<XML::LibXML::Simple>.
 
 Please post questions or ideas to the mailinglist at
 F<http://lists.scsys.co.uk/cgi-bin/mailman/listinfo/xml-compile>
+
 For live contact with other developers, visit the C<#xml-compile> channel
 on C<irc.perl.org>.
 
 =head1 LICENSE
 
-Copyrights 2008-2012 by [Mark Overmeer]. For other contributors see ChangeLog.
+Copyrights 2008-2013 by [Mark Overmeer]. For other contributors see ChangeLog.
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

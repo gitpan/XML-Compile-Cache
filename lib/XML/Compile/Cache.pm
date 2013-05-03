@@ -1,13 +1,13 @@
-# Copyrights 2008-2012 by [Mark Overmeer].
+# Copyrights 2008-2013 by [Mark Overmeer].
 #  For other contributors see ChangeLog.
 # See the manual pages for details on the licensing terms.
-# Pod stripped from pm file by OODoc 2.00.
+# Pod stripped from pm file by OODoc 2.01.
 use warnings;
 use strict;
 
 package XML::Compile::Cache;
 use vars '$VERSION';
-$VERSION = '0.992';
+$VERSION = '0.993';
 
 use base 'XML::Compile::Schema';
 
@@ -44,6 +44,62 @@ sub init($)
     $self->anyElement($args->{any_element} || 'SKIP_ALL');
 
     $self;
+}
+
+#----------------------
+
+
+sub typemap(@)
+{   my $self = shift;
+    my $t    = $self->{XCC_typemap} ||= {};
+    my @d    = @_ > 1 ? @_ : !defined $_[0] ? ()
+             : ref $_[0] eq 'HASH' ? %{$_[0]} : @{$_[0]};
+    while(@d) { my $k = $self->findName(shift @d); $t->{$k} = shift @d }
+    $t;
+}
+
+
+sub xsiType(@)
+{   my $self = shift;
+    my $x    = $self->{XCC_xsi_type} ||= {};
+    my @d    = @_ > 1 ? @_ : !defined $_[0] ? ()
+             : ref $_[0] eq 'HASH' ? %{$_[0]} : @{$_[0]};
+
+    while(@d)
+    {   my $k = $self->findName(shift @d);
+        my $a = shift @d;
+        $a = $self->namespaces->autoexpand_xsi_type($k) || []
+            if $a eq 'AUTO';
+
+        push @{$x->{$k}}
+          , ref $a eq 'ARRAY' ? (map $self->findName($_), @$a)
+          :                     $self->findName($a);
+    }
+
+    $x;
+}
+
+
+sub allowUndeclared(;$)
+{   my $self = shift;
+    @_ ? ($self->{XCC_undecl} = shift) : $self->{XCC_undecl};
+}
+
+
+sub anyElement($)
+{   my ($self, $anyelem) = @_;
+
+    # the "$self" in XCC_ropts would create a ref-cycle, causing a
+    # memory leak.
+    my $s = $self; weaken $s;
+
+    my $code
+      = $anyelem eq 'ATTEMPT' ? sub {$s->_convertAnyTyped(@_)}
+      : $anyelem eq 'SLOPPY'  ? sub {$s->_convertAnySloppy(@_)}
+      :                         $anyelem;
+     
+    $self->addCompileOptions(READERS => any_element => $code);
+    $code;
 }
 
 #----------------------
@@ -92,87 +148,48 @@ sub prefixFor($)
 }
 
 
-sub prefixed($)
-{   my ($self, $type) = @_;
-    my ($ns, $local) = unpack_type $type;
+sub learnPrefixes($)
+{   my ($self, $node) = @_;
+    my $namespaces = $self->prefixes;
+
+  PREFIX:
+    foreach my $ns ($node->getNamespaces)  # learn preferred ns
+    {   my ($prefix, $uri) = ($ns->getLocalName, $ns->getData);
+        next if !defined $prefix || $namespaces->{$uri};
+
+        if(my $def = $self->prefix($prefix))
+        {   next PREFIX if $def->{uri} eq $uri;
+        }
+        else
+        {   $self->prefixes($prefix => $uri);
+            next PREFIX;
+        }
+
+        $prefix =~ s/0?$/0/;
+        while(my $def = $self->prefix($prefix))
+        {   next PREFIX if $def->{uri} eq $uri;
+            $prefix++;
+        }
+        $self->prefixes($prefix => $uri);
+    }
+}
+
+sub addSchemas($@)
+{   my ($self, $xml) = (shift, shift);
+    $self->learnPrefixes($xml);
+    $self->SUPER::addSchemas($xml, @_);
+}
+
+
+sub prefixed($;$)
+{   my $self = shift;
+    my ($ns, $local) = @_==2 ? @_ : unpack_type(shift);
     $ns or return $local;
     my $prefix = $self->prefixFor($ns);
     defined $prefix
         or error __x"no prefix known for namespace {ns}", ns => $ns;
 
     length $prefix ? "$prefix:$local" : $local;
-}
-
-
-sub typemap(@)
-{   my $self = shift;
-    my $t    = $self->{XCC_typemap} ||= {};
-    my @d    = @_ > 1 ? @_ : !defined $_[0] ? ()
-             : ref $_[0] eq 'HASH' ? %{$_[0]} : @{$_[0]};
-    while(@d) { my $k = $self->findName(shift @d); $t->{$k} = shift @d }
-    $t;
-}
-
-
-sub xsiType(@)
-{   my $self = shift;
-    my $x    = $self->{XCC_xsi_type} ||= {};
-    my @d    = @_ > 1 ? @_ : !defined $_[0] ? ()
-             : ref $_[0] eq 'HASH' ? %{$_[0]} : @{$_[0]};
-
-    while(@d)
-    {   my $k = $self->findName(shift @d);
-        my $a = shift @d;
-        $a = $self->namespaces->autoexpand_xsi_type($k) || []
-            if $a eq 'AUTO';
-
-        push @{$x->{$k}}
-          , ref $a eq 'ARRAY' ? (map $self->findName($_), @$a)
-          :                     $self->findName($a);
-    }
-
-    $x;
-}
-
-
-sub allowUndeclared(;$)
-{   my $self = shift;
-    @_ ? ($self->{XCC_undecl} = shift) : $self->{XCC_undecl};
-}
-
-
-sub addCompileOptions(@)
-{   my $self = shift;
-    my $need = @_%2 ? shift : 'RW';
-
-    my $set
-      = $need eq 'RW'      ? $self->{XCC_opts}
-      : $need eq 'READERS' ? $self->{XCC_ropts}
-      : $need eq 'WRITERS' ? $self->{XCC_wopts}
-      : error __x"addCompileOptions() requires option set name, not {got}"
-          , got => $need;
-
-    if(ref $set eq 'HASH')
-         { while(@_) { my $k = shift; $set->{$k} = shift } }
-    else { push @$set, @_ }
-    $set;
-}
-
-
-sub anyElement($)
-{   my ($self, $anyelem) = @_;
-
-    # the "$self" in XCC_ropts would create a ref-cycle, causing a
-    # memory leak.
-    my $s = $self; weaken $s;
-
-    my $code
-      = $anyelem eq 'ATTEMPT' ? sub {$s->_convertAnyTyped(@_)}
-      : $anyelem eq 'SLOPPY'  ? sub {$s->_convertAnySloppy(@_)}
-      :                         $anyelem;
-     
-    $self->addCompileOptions(READERS => any_element => $code);
-    $code;
 }
 
 #----------------------
@@ -284,6 +301,24 @@ sub template($$@)
     my $type  = $self->findName($name);
     my @opts = $self->mergeCompileOptions($action, $type, \@_);
     $self->SUPER::template($action, $type, @opts);
+}
+
+
+sub addCompileOptions(@)
+{   my $self = shift;
+    my $need = @_%2 ? shift : 'RW';
+
+    my $set
+      = $need eq 'RW'      ? $self->{XCC_opts}
+      : $need eq 'READERS' ? $self->{XCC_ropts}
+      : $need eq 'WRITERS' ? $self->{XCC_wopts}
+      : error __x"addCompileOptions() requires option set name, not {got}"
+          , got => $need;
+
+    if(ref $set eq 'HASH')
+         { while(@_) { my $k = shift; $set->{$k} = shift } }
+    else { push @$set, @_ }
+    $set;
 }
 
 # Create a list with options for X::C::Schema::compile(), from a list of ARRAYs
