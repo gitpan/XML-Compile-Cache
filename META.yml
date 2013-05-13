@@ -23,4 +23,4 @@ requires:
   XML::Compile: 1.28
   XML::Compile::Tester: 0.02
   XML::LibXML::Simple: 0.13
-version: 0.993
+version: 0.994

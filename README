@@ -1,5 +1,5 @@
-=== README for XML-Compile-Cache version 0.993
-=   Generated on Fri May  3 15:11:22 2013 by OODoc 2.01
+=== README for XML-Compile-Cache version 0.994
+=   Generated on Mon May 13 12:17:55 2013 by OODoc 2.01
 
 There are various ways to install this module:
 
@@ -9,16 +9,16 @@ There are various ways to install this module:
  (2) if you use Windows, have a look at http://ppm.activestate.com/
 
  (3) if you have downloaded this module manually (as root/administrator)
-       gzip -d XML-Compile-Cache-0.993.tar.gz
-       tar -xf XML-Compile-Cache-0.993.tar
-       cd XML-Compile-Cache-0.993
+       gzip -d XML-Compile-Cache-0.994.tar.gz
+       tar -xf XML-Compile-Cache-0.994.tar
+       cd XML-Compile-Cache-0.994
        perl Makefile.PL
        make          # optional
        make test     # optional
        make install
 
 For usage, see the included manual-pages or
-    http://search.cpan.org/dist/XML-Compile-Cache-0.993/
+    http://search.cpan.org/dist/XML-Compile-Cache-0.994/
 
 Please report problems to
     http://rt.cpan.org/Dist/Display.html?Queue=XML-Compile-Cache

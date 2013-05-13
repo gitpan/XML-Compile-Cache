@@ -7,7 +7,7 @@ use strict;
 
 package XML::Compile::Cache;
 use vars '$VERSION';
-$VERSION = '0.993';
+$VERSION = '0.994';
 
 use base 'XML::Compile::Schema';
 
@@ -200,22 +200,22 @@ sub compileAll(;$$)
     my ($need_r, $need_w) = $self->_need($need || 'RW');
 
     if($need_r)
-    {   while(my($type, $opts) = each %{$self->{XCC_dropts}})
+    {   foreach my $type (keys %{$self->{XCC_dropts}})
         {   if(defined $usens)
             {   my ($myns, $local) = unpack_type $type;
                 next if $usens eq $myns;
             }
-            $self->{XCC_rcode}{$type} ||= $self->compile(READER=>$type,@$opts);
+            $self->{XCC_rcode}{$type} ||= $self->compile(READER=>$type);
         }
     }
 
     if($need_w)
-    {   while(my($type, $opts) = each %{$self->{XCC_dwopts}})
+    {   foreach my $type (keys %{$self->{XCC_dwopts}})
         {   if(defined $usens)
             {   my ($myns, $local) = unpack_type $type;
                 next if $usens eq $myns;
             }
-            $self->{XCC_wcode}{$type} ||= $self->compile(WRITER=>$type,@$opts);
+            $self->{XCC_wcode}{$type} ||= $self->compile(WRITER => $type);
         }
     }
 }
