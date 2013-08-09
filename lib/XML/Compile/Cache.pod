@@ -36,15 +36,15 @@ XML::Compile::Cache - Cache compiled XML translators
 
 =head1 DESCRIPTION
 
-See L<documentation in base class|XML::Compile::Schema/"DESCRIPTION">.
+See L<documentation in the base class|XML::Compile::Schema/"DESCRIPTION">.
  
 =head1 METHODS
 
-See L<documentation in base class|XML::Compile::Schema/"METHODS">.
+See L<documentation in the base class|XML::Compile::Schema/"METHODS">.
  
 =head2 Constructors
 
-See L<documentation in base class|XML::Compile::Schema/"Constructors">.
+See L<documentation in the base class|XML::Compile::Schema/"Constructors">.
  
 =over 4
 
@@ -132,7 +132,7 @@ processing, you will need to specify a HASH.
 
 =head2 Accessors
 
-See L<documentation in base class|XML::Compile::Schema/"Accessors">.
+See L<documentation in the base class|XML::Compile::Schema/"Accessors">.
  
 =over 4
 
@@ -188,7 +188,7 @@ is called to the resque.
 
 See L<XML::Compile::Schema/"Accessors">
 
-=item $obj-E<gt>B<hooks>()
+=item $obj-E<gt>B<hooks>([READER|WRITER])
 
 See L<XML::Compile::Schema/"Accessors">
 
@@ -218,6 +218,19 @@ but the code gets much cleaner.
 
 =over 4
 
+=item $obj-E<gt>B<addPrefixes>([PAIRS|ARRAY|HASH])
+
+[0.995] Returns the HASH with prefix to name-space translations.  You should
+not modify the returned HASH: new PAIRS of prefix to namespace relations
+can be passed as arguments.
+
+[0.14] If a name-space appears for the second time, then the new
+prefix will be recognized by L<findName()|XML::Compile::Cache/"Administration">, but not used in the output.
+When the prefix already exists for a different namespace, then an error
+will be casted.
+
+[0.90] You may also provide an ARRAY of pairs or a HASH.
+
 =item $obj-E<gt>B<learnPrefixes>(NODE)
 
 [0.993] Take all the prefixes defined in the NODE, and XML::LibXML::Element.
@@ -244,19 +257,10 @@ example:
    print $schema->prefixed($type) || $type;
    print $schema->prefixed($ns, $local);
 
-=item $obj-E<gt>B<prefixes>([PAIRS|ARRAY|HASH])
+=item $obj-E<gt>B<prefixes>([PARAMS])
 
-Returns the HASH with prefix to name-space translations.  You should not
-modify the returned HASH: new PAIRS of prefix to namespace relations
-can be passed as arguments.
-
-[0.14]
-If a name-space appears for the second time, then the new prefix will be
-recognized by L<findName()|XML::Compile::Cache/"Administration">, but not used in the output.  When the prefix
-already exists for a different namespace, then an error will be casted.
-
-[0.90]
-You may also provide an ARRAY of pairs or a HASH.
+Return prefixes table.  The PARAMS are deprecated since [0.995], see
+L<addPrefixes()|XML::Compile::Cache/"Prefix management">.
 
 =back
 
@@ -268,7 +272,7 @@ your program only need to pass on a ::Cache object (for instance
 a XML::Compile::WSDL11, not a CODE reference for each compiled
 translator.
 
-See L<documentation in base class|XML::Compile::Schema/"Compilers">.
+See L<documentation in the base class|XML::Compile::Schema/"Compilers">.
  
 =over 4
 
@@ -350,7 +354,7 @@ example:
 
 =head2 Administration
 
-See L<documentation in base class|XML::Compile::Schema/"Administration">.
+See L<documentation in the base class|XML::Compile::Schema/"Administration">.
  
 =over 4
 
@@ -392,7 +396,7 @@ returned.
 
 example: of findName()
 
-  $schema->prefixes(pre => 'http://namespace');
+  $schema->addPrefixes(pre => 'http://namespace');
 
   my $type = $schema->findName('pre:name');
   print $type;   # {http://namespace}name
@@ -451,7 +455,7 @@ See L<XML::Compile/"Administration">
 
 =head1 DETAILS
 
-See L<documentation in base class|XML::Compile::Schema/"DETAILS">.
+See L<documentation in the base class|XML::Compile::Schema/"DETAILS">.
  
 =head1 DESCRIPTIONS
 
@@ -480,8 +484,8 @@ L<XML::Compile::Util::pack_type()|XML::Compile::Util/"Packing">.
 
 =head1 SEE ALSO
 
-This module is part of XML-Compile-Cache distribution version 0.994,
-built on May 13, 2013. Website: F<http://perl.overmeer.net/xml-compile/>
+This module is part of XML-Compile-Cache distribution version 0.995,
+built on August 10, 2013. Website: F<http://perl.overmeer.net/xml-compile/>
 
 Other distributions in this suite:
 L<XML::Compile>,
@@ -496,8 +500,7 @@ L<XML::Compile::Tester>,
 L<XML::Compile::Cache>,
 L<XML::Compile::Dumper>,
 L<XML::Compile::RPC>,
-L<XML::Rewrite>,
-L<XML::eXistDB>,
+L<XML::Rewrite>
 and
 L<XML::LibXML::Simple>.
 
