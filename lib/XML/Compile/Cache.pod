@@ -484,8 +484,8 @@ L<XML::Compile::Util::pack_type()|XML::Compile::Util/"Packing">.
 
 =head1 SEE ALSO
 
-This module is part of XML-Compile-Cache distribution version 0.995,
-built on August 10, 2013. Website: F<http://perl.overmeer.net/xml-compile/>
+This module is part of XML-Compile-Cache distribution version 1.00,
+built on October 14, 2013. Website: F<http://perl.overmeer.net/xml-compile/>
 
 Other distributions in this suite:
 L<XML::Compile>,

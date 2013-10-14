@@ -7,7 +7,7 @@ use strict;
 
 package XML::Compile::Cache;
 use vars '$VERSION';
-$VERSION = '0.995';
+$VERSION = '1.00';
 
 use base 'XML::Compile::Schema';
 
