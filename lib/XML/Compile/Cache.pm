@@ -1,4 +1,4 @@
-# Copyrights 2008-2013 by [Mark Overmeer].
+# Copyrights 2008-2014 by [Mark Overmeer].
 #  For other contributors see ChangeLog.
 # See the manual pages for details on the licensing terms.
 # Pod stripped from pm file by OODoc 2.01.
@@ -7,7 +7,7 @@ use strict;
 
 package XML::Compile::Cache;
 use vars '$VERSION';
-$VERSION = '1.00';
+$VERSION = '1.01';
 
 use base 'XML::Compile::Schema';
 
@@ -60,7 +60,7 @@ sub typemap(@)
 }
 
 
-sub xsiType(@)
+sub addXsiType(@)
 {   my $self = shift;
     my $x    = $self->{XCC_xsi_type} ||= {};
     my @d    = @_ > 1 ? @_ : !defined $_[0] ? ()
@@ -79,6 +79,7 @@ sub xsiType(@)
 
     $x;
 }
+*xsiType = \&addXsiType;
 
 
 sub allowUndeclared(;$)
@@ -200,7 +201,8 @@ sub prefixed($;$)
     $ns or return $local;
     my $prefix = $self->prefixFor($ns);
     defined $prefix
-        or error __x"no prefix known for namespace {ns}", ns => $ns;
+        or error __x"no prefix known for namespace `{ns}', use addPrefixes()"
+            , ns => $ns;
 
     length $prefix ? "$prefix:$local" : $local;
 }

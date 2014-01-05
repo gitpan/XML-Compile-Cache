@@ -166,6 +166,14 @@ See L<XML::Compile::Schema/"Accessors">
 
 See L<XML::Compile::Schema/"Accessors">
 
+=item $obj-E<gt>B<addXsiType>([HASH|ARRAY|LIST])
+
+[1.01] add global xsi_type declarations.  Returns the xsiType set.
+The ARRAY or LIST contains pairs, just like the HASH.
+
+The value component can be 'AUTO' to automatically detect the C<xsi:type>
+extensions.  This does only work for complex types.
+
 =item $obj-E<gt>B<allowUndeclared>([BOOLEAN])
 
 Whether it is permitted to create readers and writers which are not
@@ -200,14 +208,6 @@ See L<XML::Compile::Schema/"Accessors">
 
 See L<XML::Compile::Schema/"Accessors">
 
-=item $obj-E<gt>B<xsiType>([HASH|ARRAY|LIST])
-
-[0.98] add global xsi_type declarations.  Returns the xsiType set.
-The ARRAY or LIST contains pairs, just like the HASH.
-
-The value component can be 'AUTO' to automatically detect the C<xsi:type>
-extensions.  This does only work for complex types.
-
 =back
 
 =head2 Prefix management
@@ -219,6 +219,17 @@ but the code gets much cleaner.
 =over 4
 
 =item $obj-E<gt>B<addPrefixes>([PAIRS|ARRAY|HASH])
+
+The X::C logic does auto-detect prefix/namespaces combinations from
+the XML, but does not search extensively for namespace declarations.
+Also, sometimes the same namespace is used with different prefixes.
+Sometimes, the same prefix is used for different namesapces.  To complete
+the list, or control the actual prefix being used, you explicitly declare
+combinations.
+
+The B<best way> to add prefixes is via L<new(prefixes)|XML::Compile::Cache/"Constructors">, which will give
+your names preference over the names found in the schema's which get loaded.
+For instance, use C<< ::WSDL->new(prefixes => [ $prefix => $ns ] >>
 
 [0.995] Returns the HASH with prefix to name-space translations.  You should
 not modify the returned HASH: new PAIRS of prefix to namespace relations
@@ -484,12 +495,13 @@ L<XML::Compile::Util::pack_type()|XML::Compile::Util/"Packing">.
 
 =head1 SEE ALSO
 
-This module is part of XML-Compile-Cache distribution version 1.00,
-built on October 14, 2013. Website: F<http://perl.overmeer.net/xml-compile/>
+This module is part of XML-Compile-Cache distribution version 1.01,
+built on January 05, 2014. Website: F<http://perl.overmeer.net/xml-compile/>
 
 Other distributions in this suite:
 L<XML::Compile>,
 L<XML::Compile::SOAP>,
+L<XML::Compile::WSDL11>,
 L<XML::Compile::SOAP12>,
 L<XML::Compile::SOAP::Daemon>,
 L<XML::Compile::SOAP::WSA>,
@@ -511,7 +523,7 @@ on C<irc.perl.org>.
 
 =head1 LICENSE
 
-Copyrights 2008-2013 by [Mark Overmeer]. For other contributors see ChangeLog.
+Copyrights 2008-2014 by [Mark Overmeer]. For other contributors see ChangeLog.
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.
