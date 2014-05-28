@@ -36,23 +36,23 @@ XML::Compile::Cache - Cache compiled XML translators
 
 =head1 DESCRIPTION
 
-See L<documentation in the base class|XML::Compile::Schema/"DESCRIPTION">.
+Extends L<"DESCRIPTION" in XML::Compile::Schema|XML::Compile::Schema/"DESCRIPTION">.
  
 =head1 METHODS
 
-See L<documentation in the base class|XML::Compile::Schema/"METHODS">.
+Extends L<"METHODS" in XML::Compile::Schema|XML::Compile::Schema/"METHODS">.
  
 =head2 Constructors
 
-See L<documentation in the base class|XML::Compile::Schema/"Constructors">.
+Extends L<"Constructors" in XML::Compile::Schema|XML::Compile::Schema/"Constructors">.
  
 =over 4
 
-=item XML::Compile::Cache-E<gt>B<new>(OPTIONS)
+=item XML::Compile::Cache-E<gt>B<new>(%options)
 
  -Option            --Defined in          --Default
   allow_undeclared                          <false>
-  any_element                               'SKIP_ALL'
+  any_element                               'ATTEMPT'
   block_namespace     XML::Compile::Schema  []
   hook                XML::Compile::Schema  undef
   hooks               XML::Compile::Schema  []
@@ -80,15 +80,21 @@ they are consistent over each use of the type.
 
 See L<anyElement()|XML::Compile::Cache/"Accessors">.
 
+[1.02] the default is to ATTEMPT compiling any handlers automatically.
+Before version 1.02, the default was to SKIP_ALL elements which would
+match the occurs and namespace restrictions of the any specification.
+However, that fails for reperative blocks (for instance, it fails for
+an choice which may occur unbounded times)
+
 =item block_namespace => NAMESPACE|TYPE|HASH|CODE|ARRAY
 
-=item hook => ARRAY-WITH-HOOKDATA | HOOK
+=item hook => HOOK|ARRAY
 
-=item hooks => ARRAY-OF-HOOK
+=item hooks => ARRAY
 
 =item ignore_unused_tags => BOOLEAN|REGEXP
 
-=item key_rewrite => HASH|CODE|ARRAY-of-HASH-and-CODE
+=item key_rewrite => HASH|CODE|ARRAY
 
 =item opts_readers => HASH|ARRAY-of-PAIRS
 
@@ -132,41 +138,41 @@ processing, you will need to specify a HASH.
 
 =head2 Accessors
 
-See L<documentation in the base class|XML::Compile::Schema/"Accessors">.
+Extends L<"Accessors" in XML::Compile::Schema|XML::Compile::Schema/"Accessors">.
  
 =over 4
 
-=item $obj-E<gt>B<addHook>(HOOKDATA|HOOK|undef)
+=item $obj-E<gt>B<addHook>($hook|LIST|undef)
 
-See L<XML::Compile::Schema/"Accessors">
+Inherited, see L<XML::Compile::Schema/"Accessors">
 
-=item $obj-E<gt>B<addHooks>(HOOK, [HOOK, ...])
+=item $obj-E<gt>B<addHooks>( $hook, [$hook, ...] )
 
-See L<XML::Compile::Schema/"Accessors">
+Inherited, see L<XML::Compile::Schema/"Accessors">
 
-=item $obj-E<gt>B<addKeyRewrite>(PREDEF|CODE|HASH, ...)
+=item $obj-E<gt>B<addKeyRewrite>($predef|CODE|HASH, ...)
 
-See L<XML::Compile::Schema/"Accessors">
+Inherited, see L<XML::Compile::Schema/"Accessors">
 
-=item $obj-E<gt>B<addSchemaDirs>(DIRECTORIES|FILENAME)
+=item $obj-E<gt>B<addSchemaDirs>(@directories|$filename)
 
-=item XML::Compile::Cache-E<gt>B<addSchemaDirs>(DIRECTORIES|FILENAME)
+=item XML::Compile::Cache-E<gt>B<addSchemaDirs>(@directories|$filename)
 
-See L<XML::Compile/"Accessors">
+Inherited, see L<XML::Compile/"Accessors">
 
-=item $obj-E<gt>B<addSchemas>(XML, OPTIONS)
+=item $obj-E<gt>B<addSchemas>($xml, %options)
 
-See L<XML::Compile::Schema/"Accessors">
+Inherited, see L<XML::Compile::Schema/"Accessors">
 
 =item $obj-E<gt>B<addTypemap>(PAIR)
 
-See L<XML::Compile::Schema/"Accessors">
+Inherited, see L<XML::Compile::Schema/"Accessors">
 
 =item $obj-E<gt>B<addTypemaps>(PAIRS)
 
-See L<XML::Compile::Schema/"Accessors">
+Inherited, see L<XML::Compile::Schema/"Accessors">
 
-=item $obj-E<gt>B<addXsiType>([HASH|ARRAY|LIST])
+=item $obj-E<gt>B<addXsiType>( [HASH|ARRAY|LIST] )
 
 [1.01] add global xsi_type declarations.  Returns the xsiType set.
 The ARRAY or LIST contains pairs, just like the HASH.
@@ -174,7 +180,7 @@ The ARRAY or LIST contains pairs, just like the HASH.
 The value component can be 'AUTO' to automatically detect the C<xsi:type>
 extensions.  This does only work for complex types.
 
-=item $obj-E<gt>B<allowUndeclared>([BOOLEAN])
+=item $obj-E<gt>B<allowUndeclared>( [BOOLEAN] )
 
 Whether it is permitted to create readers and writers which are not
 declared cleanly.
@@ -192,21 +198,21 @@ be included as XML::LibXML::Element node.
 attempted. But is the type is not known, L<XML::LibXML::Simple::XMLin()|XML::LibXML::Simple/"Translators">
 is called to the resque.
 
-=item $obj-E<gt>B<blockNamespace>(NAMESPACE|TYPE|HASH|CODE|ARRAY)
+=item $obj-E<gt>B<blockNamespace>($ns|$type|HASH|CODE|ARRAY)
 
-See L<XML::Compile::Schema/"Accessors">
+Inherited, see L<XML::Compile::Schema/"Accessors">
 
-=item $obj-E<gt>B<hooks>([READER|WRITER])
+=item $obj-E<gt>B<hooks>( [<'READER'|'WRITER'>] )
 
-See L<XML::Compile::Schema/"Accessors">
+Inherited, see L<XML::Compile::Schema/"Accessors">
 
-=item $obj-E<gt>B<typemap>([HASH|ARRAY|PAIRS])
+=item $obj-E<gt>B<typemap>( [HASH|ARRAY|PAIRS] )
 
 [0.98] Add global knowledge on typemaps.  Returns the typemap.
 
-=item $obj-E<gt>B<useSchema>(SCHEMA, [SCHEMA])
+=item $obj-E<gt>B<useSchema>( $schema, [$schema, ...] )
 
-See L<XML::Compile::Schema/"Accessors">
+Inherited, see L<XML::Compile::Schema/"Accessors">
 
 =back
 
@@ -218,7 +224,7 @@ but the code gets much cleaner.
 
 =over 4
 
-=item $obj-E<gt>B<addPrefixes>([PAIRS|ARRAY|HASH])
+=item $obj-E<gt>B<addPrefixes>( [PAIRS|ARRAY|HASH] )
 
 The X::C logic does auto-detect prefix/namespaces combinations from
 the XML, but does not search extensively for namespace declarations.
@@ -242,35 +248,35 @@ will be casted.
 
 [0.90] You may also provide an ARRAY of pairs or a HASH.
 
-=item $obj-E<gt>B<learnPrefixes>(NODE)
+=item $obj-E<gt>B<learnPrefixes>($node)
 
-[0.993] Take all the prefixes defined in the NODE, and XML::LibXML::Element.
-This is not recursive: only on those defined at the top NODE.
+[0.993] Take all the prefixes defined in the $node, and XML::LibXML::Element.
+This is not recursive: only on those defined at the top $node.
 
-=item $obj-E<gt>B<prefix>(PREFIX)
+=item $obj-E<gt>B<prefix>($prefix)
 
 Lookup a prefix definition.  This returns a HASH with namespace info.
 
-=item $obj-E<gt>B<prefixFor>(URI)
+=item $obj-E<gt>B<prefixFor>($uri)
 
-Lookup the preferred prefix for the URI.
+Lookup the preferred prefix for the $uri.
 
-=item $obj-E<gt>B<prefixed>(TYPE|(NAMESPACE,LOCAL))
+=item $obj-E<gt>B<prefixed>( $type|<$ns,$local> )
 
-Translate the fully qualified TYPE into a prefixed version.  Will produce
+Translate the fully qualified $type into a prefixed version.  Will produce
 undef if the namespace is unknown.
 
-[0.993] When your TYPE is not in packed form, you can specify a namespace
-and LOCAL type name as separate arguments.
+[0.993] When your $type is not in packed form, you can specify a namespace
+and $local type name as separate arguments.
 
 example: 
 
    print $schema->prefixed($type) || $type;
    print $schema->prefixed($ns, $local);
 
-=item $obj-E<gt>B<prefixes>([PARAMS])
+=item $obj-E<gt>B<prefixes>( [$params] )
 
-Return prefixes table.  The PARAMS are deprecated since [0.995], see
+Return prefixes table.  The $params are deprecated since [0.995], see
 L<addPrefixes()|XML::Compile::Cache/"Prefix management">.
 
 =back
@@ -283,50 +289,50 @@ your program only need to pass on a ::Cache object (for instance
 a XML::Compile::WSDL11, not a CODE reference for each compiled
 translator.
 
-See L<documentation in the base class|XML::Compile::Schema/"Compilers">.
+Extends L<"Compilers" in XML::Compile::Schema|XML::Compile::Schema/"Compilers">.
  
 =over 4
 
-=item $obj-E<gt>B<addCompileOptions>(['READERS'|'WRITERS'|'RW'], OPTIONS)
+=item $obj-E<gt>B<addCompileOptions>( ['READERS'|'WRITERS'|'RW'], %options )
 
 [0.99] You may provide global compile options with L<new(opts_rw)|XML::Compile::Cache/"Constructors">,
 C<opts_readers> and C<opts_writers>, but also later using this method.
 
-=item $obj-E<gt>B<compile>(('READER'|'WRITER'), TYPE, OPTIONS)
+=item $obj-E<gt>B<compile>( <'READER'|'WRITER'>, $type, %options )
 
-See L<XML::Compile::Schema/"Compilers">
+Inherited, see L<XML::Compile::Schema/"Compilers">
 
-=item $obj-E<gt>B<compileAll>(['READERS'|'WRITERS'|'RW', [NAMESPACE]])
+=item $obj-E<gt>B<compileAll>( ['READERS'|'WRITERS'|'RW', [$ns]] )
 
 Compile all the declared readers and writers with the default 'RW').  You may
 also select to pre-compile only the READERS or only the WRITERS.  The
-selection can be limited further by specifying a NAMESPACE.
+selection can be limited further by specifying a $ns.
 
 By default, the processors are only compiled when used.  This method is
 especially useful in a B<daemon process>, where preparations can take as
 much time as they want to... and running should be as fast as possible.
 
-=item $obj-E<gt>B<dataToXML>(NODE|REF-XML-STRING|XML-STRING|FILENAME|FILEHANDLE|KNOWN)
+=item $obj-E<gt>B<dataToXML>($node|REF-XML|XML-STRING|$filename|$fh|$known)
 
-=item XML::Compile::Cache-E<gt>B<dataToXML>(NODE|REF-XML-STRING|XML-STRING|FILENAME|FILEHANDLE|KNOWN)
+=item XML::Compile::Cache-E<gt>B<dataToXML>($node|REF-XML|XML-STRING|$filename|$fh|$known)
 
-See L<XML::Compile/"Compilers">
+Inherited, see L<XML::Compile/"Compilers">
 
-=item $obj-E<gt>B<initParser>(OPTIONS)
+=item $obj-E<gt>B<initParser>(%options)
 
-=item XML::Compile::Cache-E<gt>B<initParser>(OPTIONS)
+=item XML::Compile::Cache-E<gt>B<initParser>(%options)
 
-See L<XML::Compile/"Compilers">
+Inherited, see L<XML::Compile/"Compilers">
 
-=item $obj-E<gt>B<reader>(TYPE|NAME, OPTIONS)
+=item $obj-E<gt>B<reader>($type|$name, %options)
 
-Returns the reader CODE for the TYPE or NAME (see L<findName()|XML::Compile::Cache/"Administration">).
-OPTIONS are only permitted if L<new(allow_undeclared)|XML::Compile::Cache/"Constructors"> is true, and the
+Returns the reader CODE for the $type or $name (see L<findName()|XML::Compile::Cache/"Administration">).
+%options are only permitted if L<new(allow_undeclared)|XML::Compile::Cache/"Constructors"> is true, and the
 same as the previous call to this method.
 
 The reader will be compiled the first time that it is used, and that
 same CODE reference will be returned each next request for the same
-TYPE.  Call L<compileAll()|XML::Compile::Cache/"Compilers"> to have all readers compiled by force.
+$type.  Call L<compileAll()|XML::Compile::Cache/"Compilers"> to have all readers compiled by force.
 
 example: 
 
@@ -337,13 +343,13 @@ example:
   my $getmem = $schema->reader('gml:members');
   my $data   = $getmem->($xml);
 
-=item $obj-E<gt>B<template>('XML'|'PERL'|'TREE', ELEMENT, OPTIONS)
+=item $obj-E<gt>B<template>( <'XML'|'PERL'|'TREE'>, $element, %options )
 
-See L<XML::Compile::Schema/"Compilers">
+Inherited, see L<XML::Compile::Schema/"Compilers">
 
-=item $obj-E<gt>B<writer>(TYPE|NAME)
+=item $obj-E<gt>B<writer>($type|$name)
 
-Returns the writer CODE for the TYPE or NAME (see L<findName()|XML::Compile::Cache/"Administration">).
+Returns the writer CODE for the $type or $name (see L<findName()|XML::Compile::Cache/"Administration">).
 OPTIONS are only permitted if L<new(allow_undeclared)|XML::Compile::Cache/"Constructors"> is true, and the
 same as the previous call to this method.
 
@@ -365,19 +371,19 @@ example:
 
 =head2 Administration
 
-See L<documentation in the base class|XML::Compile::Schema/"Administration">.
+Extends L<"Administration" in XML::Compile::Schema|XML::Compile::Schema/"Administration">.
  
 =over 4
 
-=item $obj-E<gt>B<declare>('READER'|'WRITER'|'RW', TYPE|ARRAY-of-TYPES, OPTIONS)
+=item $obj-E<gt>B<declare>( <'READER'|'WRITER'|'RW'>, <$type|ARRAY>, %options )
 
-Register that the indicated TYPE (or TYPES) may be used, and needs to
-be translated with the OPTIONS (either specified as ARRAY or LIST).
+Register that the indicated $type (or ARRAY of them) may be used, and needs to
+be translated with the %options (either specified as ARRAY or PAIRS).
 Specify whether it may get used as READER, WRITER, or both (RW).  If the
 READER and WRITER need different options, then you need to declare them
 separately; in that case you cannot use RW.
 
-The TYPE should be understood by L<findName()|XML::Compile::Cache/"Administration">, so may be prefixed.
+The $type should be understood by L<findName()|XML::Compile::Cache/"Administration">, so may be prefixed.
 
 example: 
 
@@ -386,18 +392,18 @@ example:
 
   $cache->declare(WRITER => [ 'xsd:int', '{http://}aap' ]);
 
-=item $obj-E<gt>B<doesExtend>(EXTTYPE, BASETYPE)
+=item $obj-E<gt>B<doesExtend>($exttype, $basetype)
 
-See L<XML::Compile::Schema/"Administration">
+Inherited, see L<XML::Compile::Schema/"Administration">
 
 =item $obj-E<gt>B<elements>()
 
-See L<XML::Compile::Schema/"Administration">
+Inherited, see L<XML::Compile::Schema/"Administration">
 
-=item $obj-E<gt>B<findName>(NAME)
+=item $obj-E<gt>B<findName>($name)
 
-Translate the NAME specification into a schema defined full type.
-The NAME can be a full type (like '{namespace}localname', usually
+Translate the $name specification into a schema defined full type.
+The $name can be a full type (like '{namespace}localname', usually
 created with L<XML::Compile::Util::pack_type()|XML::Compile::Util/"Packing">) or a prefixed type
 (like 'myns:localname', where C<myns> is defined via L<new(prefixes)|XML::Compile::Cache/"Constructors">
 or L<prefixes()|XML::Compile::Cache/"Prefix management">).
@@ -418,27 +424,27 @@ example: of findName()
   my $type = $schema->findName('{somens}name');
   print $type;   # {somens}name    [a no-op]
 
-=item $obj-E<gt>B<findSchemaFile>(FILENAME)
+=item $obj-E<gt>B<findSchemaFile>($filename)
 
-=item XML::Compile::Cache-E<gt>B<findSchemaFile>(FILENAME)
+=item XML::Compile::Cache-E<gt>B<findSchemaFile>($filename)
 
-See L<XML::Compile/"Administration">
+Inherited, see L<XML::Compile/"Administration">
 
-=item $obj-E<gt>B<importDefinitions>(XMLDATA, OPTIONS)
+=item $obj-E<gt>B<importDefinitions>($xmldata, %options)
 
-See L<XML::Compile::Schema/"Administration">
+Inherited, see L<XML::Compile::Schema/"Administration">
 
-=item $obj-E<gt>B<knownNamespace>(NAMESPACE|PAIRS)
+=item $obj-E<gt>B<knownNamespace>($ns|PAIRS)
 
-=item XML::Compile::Cache-E<gt>B<knownNamespace>(NAMESPACE|PAIRS)
+=item XML::Compile::Cache-E<gt>B<knownNamespace>($ns|PAIRS)
 
-See L<XML::Compile/"Administration">
+Inherited, see L<XML::Compile/"Administration">
 
 =item $obj-E<gt>B<namespaces>()
 
-See L<XML::Compile::Schema/"Administration">
+Inherited, see L<XML::Compile::Schema/"Administration">
 
-=item $obj-E<gt>B<printIndex>([FILEHANDLE], OPTIONS)
+=item $obj-E<gt>B<printIndex>( [$fh], %options )
 
  -Option       --Default
   show_declared  <true>
@@ -456,17 +462,17 @@ C<R> and/or C<W>.
 
 =item $obj-E<gt>B<types>()
 
-See L<XML::Compile::Schema/"Administration">
+Inherited, see L<XML::Compile::Schema/"Administration">
 
-=item $obj-E<gt>B<walkTree>(NODE, CODE)
+=item $obj-E<gt>B<walkTree>($node, CODE)
 
-See L<XML::Compile/"Administration">
+Inherited, see L<XML::Compile/"Administration">
 
 =back
 
 =head1 DETAILS
 
-See L<documentation in the base class|XML::Compile::Schema/"DETAILS">.
+Extends L<"DETAILS" in XML::Compile::Schema|XML::Compile::Schema/"DETAILS">.
  
 =head1 DESCRIPTIONS
 
@@ -495,8 +501,8 @@ L<XML::Compile::Util::pack_type()|XML::Compile::Util/"Packing">.
 
 =head1 SEE ALSO
 
-This module is part of XML-Compile-Cache distribution version 1.01,
-built on January 05, 2014. Website: F<http://perl.overmeer.net/xml-compile/>
+This module is part of XML-Compile-Cache distribution version 1.02,
+built on May 28, 2014. Website: F<http://perl.overmeer.net/xml-compile/>
 
 Other distributions in this suite:
 L<XML::Compile>,

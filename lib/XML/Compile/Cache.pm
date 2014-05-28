@@ -7,7 +7,7 @@ use strict;
 
 package XML::Compile::Cache;
 use vars '$VERSION';
-$VERSION = '1.01';
+$VERSION = '1.02';
 
 use base 'XML::Compile::Schema';
 
@@ -42,7 +42,7 @@ sub init($)
 
     $self->typemap($args->{typemap});
     $self->xsiType($args->{xsi_type});
-    $self->anyElement($args->{any_element} || 'SKIP_ALL');
+    $self->anyElement($args->{any_element} || 'ATTEMPT');
 
     $self;
 }
@@ -548,6 +548,9 @@ sub printIndex(@)
 sub _convertAnyTyped(@)
 {   my ($self, $type, $nodes, $path, $read) = @_;
 
+{no warnings;
+defined $read or warn join ';', caller(0);
+}
     my $key     = $read->keyRewrite($type);
     my $reader  = try { $self->reader($type) };
     if($@)
