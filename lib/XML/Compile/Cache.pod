@@ -224,6 +224,19 @@ but the code gets much cleaner.
 
 =over 4
 
+=item $obj-E<gt>B<addNicePrefix>(BASE, NAMESPACE)
+
+[1.03] Register NAMESPACE -if not yet defined- with prefix name BASE.  When
+that prefix name is already in use for some other namespace, BASE followed
+by a number are attempted (starting with 01).  The prefix is returned.
+
+When the BASE already ends on a number, that number will get counted.
+
+example: 
+
+  my $prefix = $schema->addNicePrefix('call', $myns);
+  # $prefix now can be call, call01, call02 etc
+
 =item $obj-E<gt>B<addPrefixes>( [PAIRS|ARRAY|HASH] )
 
 The X::C logic does auto-detect prefix/namespaces combinations from
@@ -312,6 +325,10 @@ By default, the processors are only compiled when used.  This method is
 especially useful in a B<daemon process>, where preparations can take as
 much time as they want to... and running should be as fast as possible.
 
+=item $obj-E<gt>B<compileType>( <'READER'|'WRITER'>, $type, %options )
+
+Inherited, see L<XML::Compile::Schema/"Compilers">
+
 =item $obj-E<gt>B<dataToXML>($node|REF-XML|XML-STRING|$filename|$fh|$known)
 
 =item XML::Compile::Cache-E<gt>B<dataToXML>($node|REF-XML|XML-STRING|$filename|$fh|$known)
@@ -333,6 +350,18 @@ same as the previous call to this method.
 The reader will be compiled the first time that it is used, and that
 same CODE reference will be returned each next request for the same
 $type.  Call L<compileAll()|XML::Compile::Cache/"Compilers"> to have all readers compiled by force.
+
+ -Option --Default
+  is_type  <false>
+
+=over 2
+
+=item is_type => BOOLEAN
+
+[1.03] use L<compileType()|XML::Compile::Schema/"Compilers"> with the given element, to replace L<compile()|XML::Compile::Schema/"Compilers">
+You probably want an additional C<element> parameter.
+
+=back
 
 example: 
 
@@ -356,6 +385,18 @@ same as the previous call to this method.
 The writer will be compiled the first time that it is used, and that
 same CODE reference will be returned each next request for the same
 type.
+
+ -Option --Default
+  is_type  <false>
+
+=over 2
+
+=item is_type => BOOLEAN
+
+[1.03] use L<compileType()|XML::Compile::Schema/"Compilers"> with the given element, to replace L<compile()|XML::Compile::Schema/"Compilers">
+You probably want an additional C<element> parameter.
+
+=back
 
 example: 
 
@@ -501,8 +542,8 @@ L<XML::Compile::Util::pack_type()|XML::Compile::Util/"Packing">.
 
 =head1 SEE ALSO
 
-This module is part of XML-Compile-Cache distribution version 1.02,
-built on May 28, 2014. Website: F<http://perl.overmeer.net/xml-compile/>
+This module is part of XML-Compile-Cache distribution version 1.03,
+built on December 22, 2014. Website: F<http://perl.overmeer.net/xml-compile/>
 
 Other distributions in this suite:
 L<XML::Compile>,
